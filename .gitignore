@@ -1,0 +1,31 @@
+# ignore all logs
+*.log
+
+# ignore temporaries
+**/*.swp
+**/*~
+
+# ignore Rhistory
+**/.Rhistory
+
+# ignore Eclipse project files
+.cproject
+.project
+
+# ignore PyDev config file
+.pydevproject
+
+# ignore archives
+archive/*
+
+# ignore test data
+data/*
+
+# ignore sequence files
+**/*.fa
+**/*.fasta
+**/*.fq
+**/*.fastq
+
+# ignore archives
+archive/**
