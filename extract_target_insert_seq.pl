@@ -4,31 +4,36 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use Bio::SeqIO;
 
 my $min_insert = 44;
-my $usage = "Usage: $0 -t TARGET-BEDFILE -i INFILE -o OUTFILE [--min-insert $min_insert]";
+my $usage = "Usage: $0 -t TARGET-BEDFILE -i INFILE -fq FASTQ-OUTFILE -fa FASTA-OUTFILE [--min-insert $min_insert]";
 
 # get opts
 my $target_file;
 my $infile;
-my $outfile;
+my $fq_outfile;
+my $fa_outfile;
 
 GetOptions(
 "t=s" => \$target_file,
 "i=s" => \$infile,
-"o=s" => \$outfile,
+"fq=s" => \$fq_outfile,
+"fa=s" => \$fa_outfile,
 "min-insert=i" => \$min_insert)
 or die "Error in command line arguments, usage: $usage";
 
 # open input
 open(BED, "<$target_file") || die "Unable to open $target_file: $!";
 open(IN, "samtools view $infile |") || die "Unable to open samtools with samtools: $!";
-open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
+open(FQO, ">$fq_outfile") || die "Unable to write to $fq_outfile: $!";
+my $fao = new Bio::SeqIO(-file => ">$fa_outfile", -format => 'fasta', -alphabet => 'dna');
+$fao->width(100); # set a line-width
 
 # read in target site
 my $loc = <BED>;
 chomp $loc;
-my ($chr, $start, $end) = split(/\t/, $loc);
+my ($chr, $start, $end, $target_name) = split(/\t/, $loc);
 
 while(my $line = <IN>) {
 	chomp $line;
@@ -37,6 +42,7 @@ while(my $line = <IN>) {
 		print STDERR "Warning: ROI alignment chromosome does not match the target one, ignore\n";
 		next;
 	}
+	my $qlen = length $seq;
 	my $strand = ($flag & 0x10) ? '-' : '+';
 	my $insert_start = $pos - 1; # 0-based
 	my $insert_from = 0; # 0-based
@@ -52,15 +58,14 @@ while(my $line = <IN>) {
 		elsif($op eq 'N') {
 			$insert_start += $len;
 		}
-		elsif($op eq 'S') {
-			$insert_from += $len;
-		}
 		elsif($op eq 'D') {
 			$insert_start += $len;
 		}
-		elsif($op eq 'I') { # insert region
-			if($start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is in the target region and large enough
-				my $insert_id = "$qname:$insert_start:$strand:$len$op";
+		elsif($op eq 'S' || $op eq 'I') { # insert or 5'/3' end clip region
+			if($start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is in the target region
+				my $insert_left = $insert_from;
+				my $insert_right = $qlen - $insert_from - $len;
+				my $insert_id = "$qname:$chr:$start:$end:$target_name:$insert_start:$strand:$insert_left" . 'L:' . "$len$op:$insert_right" . 'R';
 				my $insert_seq = substr($seq, $insert_from, $len);
 				my $insert_qual = substr($qual, $insert_from, $len);
 				die if(length($insert_seq) != length($insert_qual));
@@ -69,7 +74,8 @@ while(my $line = <IN>) {
 					$insert_qual = reverse($insert_qual);
 					$insert_seq =~ tr/ACGTUacgtu/TGCAAtgcaa/;
 				}
-				print OUT "\@$insert_id\n$insert_seq\n+\n$insert_qual\n";
+				print FQO "\@$insert_id\n$insert_seq\n+\n$insert_qual\n";
+				$fao->write_seq(new Bio::Seq(-display_id => $insert_id, -seq => $insert_seq));
 			}
 			$insert_from += $len; # update
 		}
@@ -79,4 +85,5 @@ while(my $line = <IN>) {
 
 close(BED);
 close(IN);
-close(OUT);
+close(FQO);
+$fao->close();

@@ -10,7 +10,7 @@ use Cas9OntSeqExpDesign;
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
-my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target ref_insert insert_nuclease_mapped insert_donor_mapped insert_ref2_mapped insert_vec2_mapped);
+my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target ref_insert insert_mapped insert_nuclease_mapped insert_donor_mapped insert_trans_mapped insert_helper_mapped insert_ref2_mapped insert_vec2_mapped);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -91,9 +91,17 @@ foreach my $sample ($design->get_sample_names()) {
 		$ref_insert /= 4;
 	}
 
-# get nuclease vec mapped
-	my $nuclease_mapped;
+# get vec mapped
+	my $vec_mapped = 0;
 	{
+		my $in = $design->get_sample_vec_sorted_file($sample);
+		$vec_mapped = `$samtools view | cut -f1 | sort -u | wc -l`;
+		chomp $vec_mapped;
+	}
+
+# get nuclease vec mapped
+	my $nuclease_mapped = 0;
+	if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $in = $design->get_sample_vec_sorted_file($sample);
 		my $bed = $design->get_sample_nuclease_vec_region($sample);
 		$nuclease_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
@@ -101,10 +109,28 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 # get donor vec mapped
-	my $donor_mapped;
-	{
+	my $donor_mapped = 0;
+	if($design->sample_opt($sample, 'donor_gb')) {
 		my $in = $design->get_sample_vec_sorted_file($sample);
 		my $bed = $design->get_sample_donor_vec_region($sample);
+		$donor_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
+		chomp $donor_mapped;
+	}
+
+# get trans vec mapped
+	my $trans_mapped = 0;
+	if($design->sample_opt($sample, 'trans_gb')) {
+		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $bed = $design->get_sample_trans_vec_region($sample);
+		$nuclease_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
+		chomp $nuclease_mapped;
+	}
+
+# get helper vec mapped
+	my $helper_mapped = 0;
+  if($design->sample_opt($sample, 'helper_gb')) {
+		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $bed = $design->get_sample_helper_vec_region($sample);
 		$donor_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
 		chomp $donor_mapped;
 	}
@@ -126,7 +152,7 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 # output
-  print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t$ref_insert\t$nuclease_mapped\t$donor_mapped\t$ref2_mapped\t$vec2_mapped\n";
+  print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t$ref_insert\t$vec_mapped\t$nuclease_mapped\t$donor_mapped\t$trans_mapped\t$helper_mapped\t$ref2_mapped\t$vec2_mapped\n";
 }
 
 close(OUT);

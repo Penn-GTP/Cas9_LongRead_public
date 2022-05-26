@@ -57,8 +57,8 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
-# prepare get nuclease vec seq and annotation cmd
-	{
+# prepare get nuclease vec info cmd
+	if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $in = $design->sample_opt($sample, 'nuclease_gb');
 		my $seq_out = $design->get_sample_nuclease_vec_seq($sample);
 		my $reg_out = $design->get_sample_nuclease_vec_region($sample);
@@ -73,8 +73,8 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare get donor vec seq and annotation cmd
-	{
+# prepare get donor vec info cmd
+  if($design->sample_opt($sample, 'donor_gb')) {
 		my $in = $design->sample_opt($sample, 'donor_gb');
 		my $seq_out = $design->get_sample_donor_vec_seq($sample);
 		my $reg_out = $design->get_sample_donor_vec_region($sample);
@@ -89,13 +89,56 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
+# prepare get trans vec info cmd
+  if($design->sample_opt($sample, 'trans_gb')) {
+		my $in = $design->sample_opt($sample, 'trans_gb');
+		my $seq_out = $design->get_sample_trans_vec_seq($sample);
+		my $reg_out = $design->get_sample_trans_vec_region($sample);
+		my $anno_out = $design->get_sample_trans_vec_anno($sample);
+		my $cmd = "$SCRIPT_DIR/$vec_anno_script $VEC_DIR/$in $VEC_DIR/$seq_out $VEC_DIR/$reg_out $VEC_DIR/$anno_out";
+		if(!(-e "$VEC_DIR/$seq_out" && -e "$VEC_DIR/$reg_out" && -e "$VEC_DIR/$anno_out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: donor vec seq and annotation file exist, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare get helper vec info cmd
+  if($design->sample_opt($sample, 'helper_gb')) {
+		my $in = $design->sample_opt($sample, 'helper_gb');
+		my $seq_out = $design->get_sample_helper_vec_seq($sample);
+		my $reg_out = $design->get_sample_helper_vec_region($sample);
+		my $anno_out = $design->get_sample_helper_vec_anno($sample);
+		my $cmd = "$SCRIPT_DIR/$vec_anno_script $VEC_DIR/$in $VEC_DIR/$seq_out $VEC_DIR/$reg_out $VEC_DIR/$anno_out";
+		if(!(-e "$VEC_DIR/$seq_out" && -e "$VEC_DIR/$reg_out" && -e "$VEC_DIR/$anno_out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: donor vec seq and annotation file exist, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
 # prepare combine vec seq and index cmd
 	{
-		my $in1 = $design->get_sample_nuclease_vec_seq($sample);
-		my $in2 = $design->get_sample_donor_vec_seq($sample);
-		my $out = $design->get_sample_vec_seq($sample);
+    my $out = $design->get_sample_vec_seq($sample);
+    my @infiles;
+		if($design->sample_opt($sample, 'nuclease_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_nuclease_vec_seq($sample));
+		}
+		if($design->sample_opt($sample, 'donor_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_donor_vec_seq($sample));
+		}
+		if($design->sample_opt($sample, 'trans_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_trans_vec_seq($sample));
+		}
+		if($design->sample_opt($sample, 'helper_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_helper_vec_seq($sample));
+		}
 
-		my $cmd = "cat $VEC_DIR/$in1 $VEC_DIR/$in2 > $VEC_DIR/$out";
+		my $cmd = "cat " . join(" ", @infiles) . " > $VEC_DIR/$out";
 
 # add faidx cmd
 		$cmd .= "\n$samtools faidx $VEC_DIR/$out";
@@ -104,8 +147,36 @@ foreach my $sample ($design->get_sample_names()) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: vec seq file exists, won't override\n";
+			print STDERR "Warning: $VEC_DIR/$out exists, won't override\n";
 			$cmd =~ s/\n/\n# /sg; # comment out to intermediate lines
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare combine vec anno cmd
+	{
+    my $out = $design->get_sample_vec_anno($sample);
+    my @infiles;
+		if($design->sample_opt($sample, 'nuclease_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_nuclease_vec_anno($sample));
+		}
+		if($design->sample_opt($sample, 'donor_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_donor_vec_anno($sample));
+		}
+		if($design->sample_opt($sample, 'trans_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_trans_vec_anno($sample));
+		}
+		if($design->sample_opt($sample, 'helper_gb')) {
+			push(@infiles, "$VEC_DIR/" . $design->get_sample_helper_vec_anno($sample));
+		}
+
+		my $cmd = "cat " . join(" ", @infiles) . " > $VEC_DIR/$out";
+
+		if(!-e "$VEC_DIR/$out") {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $VEC_DIR/$out exists, won't override\n";
 			print OUT "# $cmd\n";
 		}
 	}

@@ -161,10 +161,52 @@ sub get_sample_donor_vec_anno {
 	return "$sample\_donor_vec_anno.gff3";
 }
 
+# get per-sample trans-vec seq file
+sub get_sample_trans_vec_seq {
+	my ($self, $sample) = @_;
+	return "$sample\_trans_vec_seq.fasta";
+}
+
+# get per-sample trans-vec region file
+sub get_sample_trans_vec_region {
+	my ($self, $sample) = @_;
+	return "$sample\_trans_vec_region.bed";
+}
+
+# get per-sample trans-vec annotation file
+sub get_sample_trans_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_trans_vec_anno.gff3";
+}
+
+# get per-sample helper-vec seq file
+sub get_sample_helper_vec_seq {
+	my ($self, $sample) = @_;
+	return "$sample\_helper_vec_seq.fasta";
+}
+
+# get per-sample helper-vec region file
+sub get_sample_helper_vec_region {
+	my ($self, $sample) = @_;
+	return "$sample\_helper_vec_region.bed";
+}
+
+# get per-sample helper-vec annotation file
+sub get_sample_helper_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_helper_vec_anno.gff3";
+}
+
 # get per-sample combined vec seq file
 sub get_sample_vec_seq {
 	my ($self, $sample) = @_;
 	return "$sample\_vec_seq.fasta";
+}
+
+# get per-sample combined vec anno file
+sub get_sample_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_vec_anno.gff3";
 }
 
 # get per-sample ref map file
@@ -216,7 +258,7 @@ sub get_sample_vec_map_file {
 }
 
 # get per-sample ref2 map file
-sub get_sample_aef2_map_file {
+sub get_sample_ref2_map_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_map.bam";
 }
@@ -291,6 +333,18 @@ sub get_sample_insert_nuclease_vec_anno {
 sub get_sample_insert_donor_vec_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_donor_vec_anno.gff3";
+}
+
+# get per-sample insert trans_vec anno
+sub get_sample_insert_trans_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_trans_vec_anno.gff3";
+}
+
+# get per-sample helper_vec anno
+sub get_sample_insert_helper_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_helper_vec_anno.gff3";
 }
 
 # get per-sample insert ref2 anno file

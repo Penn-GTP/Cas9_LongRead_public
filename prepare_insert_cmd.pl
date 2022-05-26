@@ -57,35 +57,21 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
-# prepare extract cmd
+# prepare extract and index cmd
 	{
 		my $bed = $design->sample_opt($sample, 'target_bed');
 		my $in = $design->get_sample_ref_map_target_sort_file($sample);
-		my $out = $design->get_sample_target_insert_fastq($sample);
+		my $fq_out = $design->get_sample_target_insert_fastq($sample);
+		my $fa_out = $design->get_sample_target_insert_fasta($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -o $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
+		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out";
+		$cmd .= "\n$samtools faidx $BASE_DIR/$fa_out";
+
+		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format and index cmd
-	{
-		my $in = $design->get_sample_target_insert_fastq($sample);
-		my $out = $design->get_sample_target_insert_fasta($sample);
-
-		my $cmd = "$seqret -sequence $BASE_DIR/$in -outseq $BASE_DIR/$out";
-		$cmd .= "\n$samtools index $BASE_DIR/$out";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$fq_out and $BASE_DIR/$fa_out already exists, won't override\n";
 			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
@@ -93,13 +79,13 @@ foreach my $sample ($design->get_sample_names()) {
 
 # prepare map vec cmd
 	{
-		my $vec_seq = $design->get_sample_vec_seq($sample);
+		my $vec_db = $design->get_sample_vec_seq($sample);
 		my $vec_map_opts = $design->sample_opt($sample, 'vec_map_opts');
 
 		my $in = $design->get_sample_target_insert_fastq($sample);
 		my $out = $design->get_sample_vec_map_file($sample);
 
-		my $cmd = "$NGS_ALIGNER -a -x map-ont $vec_seq $BASE_DIR/$in -Y -L -t $NUM_PROC $vec_map_opts | samtools view -b -o $WORK_DIR/$out";
+		my $cmd = "$NGS_ALIGNER -a -x map-ont $VEC_DIR/$vec_db $BASE_DIR/$in -Y -L -t $NUM_PROC $vec_map_opts | samtools view -b -o $WORK_DIR/$out";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -149,12 +135,12 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
-# prepare filer vec cmd
+# prepare filter vec cmd
 	{
 		my $in = $design->get_sample_vec_map_file($sample);
 		my $out = $design->get_sample_vec_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -165,12 +151,12 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		}
 	}
 
-# prepare filer ref2 cmd
+# prepare filter ref2 cmd
   if($design->sample_opt($sample, 'ref2_db')) {
 		my $in = $design->get_sample_ref2_map_file($sample);
 		my $out = $design->get_sample_ref2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -181,12 +167,12 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		}
 	}
 
-# prepare filer vec2 cmd
+# prepare filter vec2 cmd
   if($design->sample_opt($sample, 'vec2_db')) {
 		my $in = $design->get_sample_vec2_map_file($sample);
 		my $out = $design->get_sample_vec2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
