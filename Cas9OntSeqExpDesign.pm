@@ -383,4 +383,10 @@ sub get_sample_insert_donor_vec_count {
 	return "$sample\_target_insert_donor_vec_feature_count.tsv";
 }
 
+# get per-sample stats
+sub get_sample_stats_file {
+	my ($self, $sample) = @_;
+	return "$sample\_sample_stats.tsv";
+}
+
 1;

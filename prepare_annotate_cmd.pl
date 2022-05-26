@@ -26,6 +26,7 @@ my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 
 my $insert_size_script = 'show_insert_size_distrib.R';
+my $sample_stats_script = 'get_sample_stats.pl';
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -263,6 +264,20 @@ foreach my $sample ($design->get_sample_names()) {
 		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -M -O -f -t \""
 		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in";
 
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare sample stat cmd
+	{
+		my $out = $design->get_sample_stats_file($sample);
+
+		my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
 		if(!(-e "$BASE_DIR/$out")) {
 			print OUT "$cmd\n";
 		}
