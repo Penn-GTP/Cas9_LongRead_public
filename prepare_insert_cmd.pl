@@ -10,7 +10,7 @@ use Cas9OntSeqExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
-my $extract_insert_script = 'extract_target_insert_seq.pl';
+my $extract_insert_script = 'extract_target_insert.pl';
 my $samtools = 'samtools';
 my $seqret = 'seqret';
 
@@ -63,15 +63,16 @@ foreach my $sample ($design->get_sample_names()) {
 		my $in = $design->get_sample_ref_map_target_sort_file($sample);
 		my $fq_out = $design->get_sample_target_insert_fastq($sample);
 		my $fa_out = $design->get_sample_target_insert_fasta($sample);
+		my $info_out = $design->get_sample_target_insert_info($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out";
+		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$fa_out";
 
-		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out")) {
+		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out" && -e "$BASE_DIR/$info_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$fq_out and $BASE_DIR/$fa_out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$fq_out, $BASE_DIR/$fa_out and $BASE_DIR/$info_out already exists, won't override\n";
 			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}

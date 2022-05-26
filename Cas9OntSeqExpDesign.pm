@@ -245,10 +245,16 @@ sub get_sample_target_insert_fastq {
 	return "$sample\_target_insert_seq.fastq";
 }
 
-# get per-sample ref target insert fasta file
+# get per-sample target insert fasta file
 sub get_sample_target_insert_fasta {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_seq.fasta";
+}
+
+# get per-sample target insert info file
+sub get_sample_target_insert_info {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_info.tsv";
 }
 
 # get per-sample vec map file
@@ -303,6 +309,12 @@ sub get_sample_ref2_sorted_file {
 sub get_sample_vec2_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_map_filtered_sorted.bam";
+}
+
+# get per-sample target insert size distribution figure
+sub get_sample_target_insert_size_distrib {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_size_distrib.pdf";
 }
 
 # get per-sample vec sorted bed

@@ -25,6 +25,8 @@ my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 
+my $insert_size_script = 'show_insert_size_distrib.R';
+
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
 	print STDERR "Error: BASE_DIR $BASE_DIR not exists\n";
@@ -58,6 +60,21 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
+# prepare show insert size cmd
+  {
+		my $in = $design->get_sample_target_insert_info($sample);
+		my $out = $design->get_sample_target_insert_size_distrib($sample);
+		
+		my $cmd = "$SCRIPT_DIR/$insert_size_script $BASE_DIR/$in $BASE_DIR/$out";
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
 # prepare format vec cmd
 	{
 		my $in = $design->get_sample_vec_sorted_file($sample);

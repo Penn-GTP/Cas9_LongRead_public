@@ -7,19 +7,21 @@ use Getopt::Long;
 use Bio::SeqIO;
 
 my $min_insert = 44;
-my $usage = "Usage: $0 -t TARGET-BEDFILE -i INFILE -fq FASTQ-OUTFILE -fa FASTA-OUTFILE [--min-insert $min_insert]";
+my $usage = "Usage: $0 -t TARGET-BEDFILE -i INFILE -fq FASTQ-OUTFILE -fa FASTA-OUTFILE -info TSV-OUTFILE [--min-insert $min_insert]";
 
 # get opts
 my $target_file;
 my $infile;
 my $fq_outfile;
 my $fa_outfile;
+my $info_outfile;
 
 GetOptions(
 "t=s" => \$target_file,
 "i=s" => \$infile,
 "fq=s" => \$fq_outfile,
 "fa=s" => \$fa_outfile,
+"info=s" => \$info_outfile,
 "min-insert=i" => \$min_insert)
 or die "Error in command line arguments, usage: $usage";
 
@@ -28,7 +30,12 @@ open(BED, "<$target_file") || die "Unable to open $target_file: $!";
 open(IN, "samtools view $infile |") || die "Unable to open samtools with samtools: $!";
 open(FQO, ">$fq_outfile") || die "Unable to write to $fq_outfile: $!";
 my $fao = new Bio::SeqIO(-file => ">$fa_outfile", -format => 'fasta', -alphabet => 'dna');
+open(INFO, ">$info_outfile") || die "Unable to write to $info_outfile: $!";
+
 $fao->width(100); # set a line-width
+
+my @headers = qw(insert_id insert_chr insert_pos insert_strand insert_len insert_left insert_right insert_rel_pos insert_detect_type);
+print INFO join("\t", @headers), "\n";
 
 # read in target site
 my $loc = <BED>;
@@ -74,8 +81,11 @@ while(my $line = <IN>) {
 					$insert_qual = reverse($insert_qual);
 					$insert_seq =~ tr/ACGTUacgtu/TGCAAtgcaa/;
 				}
+				my $rel_pos = $insert_start - $start;
+				my $detect_type = $op eq 'I' ? 'complete' : 'incomplete';
 				print FQO "\@$insert_id\n$insert_seq\n+\n$insert_qual\n";
 				$fao->write_seq(new Bio::Seq(-display_id => $insert_id, -seq => $insert_seq));
+				print INFO "$insert_id\t$chr\t$insert_start\t$strand\t$len\t$insert_left\t$insert_right\t$rel_pos\t$detect_type\n";
 			}
 			$insert_from += $len; # update
 		}
