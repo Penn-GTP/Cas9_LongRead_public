@@ -230,7 +230,7 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 # prepare count nuclease map cmd
-	{
+  if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $gff = $design->get_sample_nuclease_vec_anno($sample);
 		my $in = $design->get_sample_vec_sorted_file($sample);
 		my $out = $design->get_sample_insert_nuclease_vec_count($sample);
@@ -252,7 +252,7 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 # prepare count donor map cmd
-	{
+  if($design->sample_opt($sample, 'donor_gb')) {
 		my $gff = $design->get_sample_donor_vec_anno($sample);
 		my $in = $design->get_sample_vec_sorted_file($sample);
 		my $out = $design->get_sample_insert_donor_vec_count($sample);
