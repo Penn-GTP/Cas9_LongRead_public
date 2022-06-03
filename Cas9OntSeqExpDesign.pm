@@ -374,7 +374,7 @@ sub get_sample_insert_vec2_anno {
 # get per-sample insert nuclease_vec feature count
 sub get_sample_insert_nuclease_vec_count {
 	my ($self, $sample) = @_;
-	return "$sample\_target_insert_nuclease_feature_count.tsv";
+	return "$sample\_target_insert_nuclease_vec_feature_count.tsv";
 }
 
 # get per-sample insert donor_vec feature count
