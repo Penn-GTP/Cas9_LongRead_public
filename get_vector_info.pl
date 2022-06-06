@@ -39,7 +39,11 @@ while(my $seqobj = $in->next_seq()) {
 	$out->write_seq($seqobj);
 # scan each FEATURE entity
 	foreach my $feat ($seqobj->get_SeqFeatures()) {
+# add uniq IDs
 		$feat->add_tag_value('ID', "$seqID." . (++$featID));
+# add a name for featureCount
+    my ($name) = $feat->has_tag('label') ? $feat->get_tag_values('label') : ($feat->primary_tag());
+		$feat->add_tag_value('Name', $name);
 		print ANNO $feat->gff_string($gff_formatter), "\n";
 	}
 }

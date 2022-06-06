@@ -301,9 +301,7 @@ sub get_uniq_feat_types {
 		chomp $line;
 		next if($line =~ /^#/);
 		my ($type) = (split(/\t/, $line))[2];
-		if($type ne 'source') {
-			$type_seen{$type}++;
-		}
+		$type_seen{$type}++;
 	}
 	return keys %type_seen;
 }
