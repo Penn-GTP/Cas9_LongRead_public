@@ -239,7 +239,7 @@ foreach my $sample ($design->get_sample_names()) {
 		close(GFF);
 		my $opts = $design->sample_opt($sample, 'nuclease_count_opts');
 
-		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -M -O -f -t \""
+		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
 		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in";
 
 		if(!(-e "$BASE_DIR/$out")) {
@@ -261,7 +261,7 @@ foreach my $sample ($design->get_sample_names()) {
 		close(GFF);
 		my $opts = $design->sample_opt($sample, 'donor_count_opts');
 
-		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -M -O -f -t \""
+		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
 		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in";
 
 		if(!(-e "$BASE_DIR/$out")) {
