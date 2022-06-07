@@ -23,6 +23,7 @@ my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
 my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
+my $DEFAULT_TECH = 'ont';
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -57,6 +58,7 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
+	my $tech = $design->sample_opt($sample, 'longread_tech') ? $design->sample_opt($sample, 'longread_tech') : $DEFAULT_TECH;
 # prepare extract and index cmd
 	{
 		my $bed = $design->sample_opt($sample, 'target_bed');
@@ -86,7 +88,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $in = $design->get_sample_target_insert_fastq($sample);
 		my $out = $design->get_sample_vec_map_file($sample);
 
-		my $cmd = "$NGS_ALIGNER -a -x map-ont $VEC_DIR/$vec_db $BASE_DIR/$in -Y -L -t $NUM_PROC $vec_map_opts | samtools view -b -o $WORK_DIR/$out";
+		my $cmd = "$NGS_ALIGNER -a -x map-$tech $VEC_DIR/$vec_db $BASE_DIR/$in -Y -L -t $NUM_PROC $vec_map_opts | samtools view -b -o $WORK_DIR/$out";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -105,7 +107,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $in = $design->get_sample_target_insert_fastq($sample);
 		my $out = $design->get_sample_ref2_map_file($sample);
 
-		my $cmd = "$NGS_ALIGNER -a -x map-ont $ref2_db $BASE_DIR/$in -Y -L -t $NUM_PROC $ref2_map_opts | samtools view -b -o $WORK_DIR/$out";
+		my $cmd = "$NGS_ALIGNER -a -x map-$tech $ref2_db $BASE_DIR/$in -Y -L -t $NUM_PROC $ref2_map_opts | samtools view -b -o $WORK_DIR/$out";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -124,7 +126,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $in = $design->get_sample_target_insert_fastq($sample);
 		my $out = $design->get_sample_vec2_map_file($sample);
 
-		my $cmd = "$NGS_ALIGNER -a -x map-ont $vec2_db $BASE_DIR/$in -Y -L -t $NUM_PROC $vec2_map_opts | samtools view -b -o $WORK_DIR/$out";
+		my $cmd = "$NGS_ALIGNER -a -x map-$tech $vec2_db $BASE_DIR/$in -Y -L -t $NUM_PROC $vec2_map_opts | samtools view -b -o $WORK_DIR/$out";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";

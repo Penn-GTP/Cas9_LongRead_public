@@ -22,6 +22,8 @@ my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 
+my $DEFAULT_TECH = 'ont';
+
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
 	print STDERR "Error: BASE_DIR $BASE_DIR not exists\n";
@@ -58,11 +60,12 @@ foreach my $sample ($design->get_sample_names()) {
 # prepare map cmd
 	{
 		my $ref_db = $design->sample_opt($sample, 'ref_db');
+		my $tech = $design->sample_opt($sample, 'longread_tech') ? $design->sample_opt($sample, 'longread_tech') : $DEFAULT_TECH;
 		my $ref_map_opts = $design->sample_opt($sample, 'ref_map_opts');
 		my $in = $design->sample_opt($sample, 'read_fastq');
 		my $out = $design->get_sample_ref_map_file($sample);
 
-		my $cmd = "$NGS_ALIGNER -a -x map-ont $ref_db $in -Y -L -t $NUM_PROC $ref_map_opts | samtools view -b -o $WORK_DIR/$out";
+		my $cmd = "$NGS_ALIGNER -a -x map-$tech $ref_db $in -Y -L -t $NUM_PROC $ref_map_opts | samtools view -b -o $WORK_DIR/$out";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
