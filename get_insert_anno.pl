@@ -51,7 +51,7 @@ while(my $line = <IN>) {
 
 	if((any { $type eq $_ } @inc_types) || (none { $type eq $_ } @exc_types) ) {
 		my $t_len = $end - $start;
-		my ($q_len) = $name =~ /:(\d+)I$/;
+		my ($q_len) = $name =~ /:(\d+)[IS]:/;
 
 # build target2query index, all coordinates are 0-based
 		my @r2q_idx = 0 x $end;
@@ -74,9 +74,13 @@ while(my $line = <IN>) {
 		my $over_end = $end < $end2 ? $end : $end2;
 
 		my $over_from = $r2q_idx[$over_start] + 1; # 1-based for GFF output
-			my $over_to = $r2q_idx[$over_end - 1] + 1;
+		my $over_to = $r2q_idx[$over_end - 1] + 1;
 
 		my $over_strand = $strand eq $strand2 ? '+' : '-';
+
+		if($strand eq '-') { # query is reverse complemented
+			($over_from, $over_to) = ($q_len - $over_to + 1, $q_len - $over_from + 1);
+		}
 
 		my $over_attr = $attr;
 
