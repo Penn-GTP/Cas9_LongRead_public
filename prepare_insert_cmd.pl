@@ -61,12 +61,13 @@ foreach my $sample ($design->get_sample_names()) {
 # prepare extract and index cmd
 	{
 		my $bed = $design->sample_opt($sample, 'target_bed');
+		my $min_insert = $design->sample_opt($sample, 'min_insert');
 		my $in = $design->get_sample_ref_map_target_sort_file($sample);
 		my $fq_out = $design->get_sample_target_insert_fastq($sample);
 		my $fa_out = $design->get_sample_target_insert_fasta($sample);
 		my $info_out = $design->get_sample_target_insert_info($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out";
+		my $cmd = "$SCRIPT_DIR/$extract_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out --min-insert $min_insert";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$fa_out";
 
 		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out" && -e "$BASE_DIR/$info_out")) {

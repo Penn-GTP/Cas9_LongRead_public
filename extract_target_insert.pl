@@ -6,7 +6,7 @@ use warnings;
 use Getopt::Long;
 use Bio::SeqIO;
 
-my $min_insert = 44;
+my $min_insert = 20;
 my $usage = "Usage: $0 -t TARGET-BEDFILE -i INFILE -fq FASTQ-OUTFILE -fa FASTA-OUTFILE -info TSV-OUTFILE [--min-insert $min_insert]";
 
 # get opts
@@ -15,6 +15,8 @@ my $infile;
 my $fq_outfile;
 my $fa_outfile;
 my $info_outfile;
+
+@ARGV >= 10 or die $usage;
 
 GetOptions(
 "t=s" => \$target_file,
