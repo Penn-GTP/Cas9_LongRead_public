@@ -27,6 +27,8 @@ GetOptions(
 "min-insert=i" => \$min_insert)
 or die "Error in command line arguments, usage: $usage";
 
+defined($target_file) && defined($infile) && defined($fq_outfile) && defined($fa_outfile) && defined($info_outfile) || die $usage;
+
 # open input
 open(BED, "<$target_file") || die "Unable to open $target_file: $!";
 open(IN, "samtools view $infile |") || die "Unable to open samtools with samtools: $!";
