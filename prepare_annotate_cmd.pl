@@ -277,7 +277,7 @@ foreach my $sample ($design->get_sample_names()) {
 }
 
 # prepare sample stat cmd
-my $out = $design->get_sample_stats_file($sample, $infile);
+my $out = $design->get_exp_stats_file($infile);
 
 my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
 if(!(-e "$BASE_DIR/$out")) {
