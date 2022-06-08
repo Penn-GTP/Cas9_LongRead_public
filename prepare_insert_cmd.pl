@@ -12,7 +12,6 @@ my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
 my $extract_insert_script = 'extract_target_insert.pl';
 my $samtools = 'samtools';
-my $seqret = 'seqret';
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
