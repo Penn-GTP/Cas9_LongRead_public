@@ -1,10 +1,9 @@
-package Cas9OntSeqExpDesign;
+package Cas9LongReadExpDesign;
 use strict;
 use warnings;
 use File::Basename;
 
 our $VERSION = v1.1;
-# This module is used to do option parsing given a filehandle of an experimental design file of the microbiome MiSeq 16S V1V3 pipeline
 # Author: Qi Zheng
 # Since: 02/01/2022
 

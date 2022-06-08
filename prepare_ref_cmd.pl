@@ -1,12 +1,12 @@
 #!/bin/env perl
-# Prepare sh script for mapping ITR-trimmed reads to given reference genome database, using chosen aligner
+# Prepare sh script building Cas9LongRead REF
 our $VERSION = v1.1;
 our $ENV_FILE = 'set_ref_env.sh';
 
 use strict;
 use warnings;
 use lib '/project/gtplab/pipeline/Cas9_LongRead';
-use Cas9OntSeqExpDesign;
+use Cas9LongReadExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
@@ -15,7 +15,7 @@ my $samtools = 'samtools';
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
-my $design = new Cas9OntSeqExpDesign($infile);
+my $design = new Cas9LongReadExpDesign($infile);
 my $NUM_PROC = $design->get_global_opt('NUM_PROC');
 my $BASE_DIR = $design->get_global_opt('BASE_DIR');
 my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');

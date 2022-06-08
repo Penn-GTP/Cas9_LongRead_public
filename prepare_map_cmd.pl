@@ -6,7 +6,7 @@ our $ENV_FILE = 'set_map_env.sh';
 use strict;
 use warnings;
 use lib '/project/gtplab/pipeline/Cas9_LongRead';
-use Cas9OntSeqExpDesign;
+use Cas9LongReadExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
@@ -14,7 +14,7 @@ my $samtools = 'samtools';
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
-my $design = new Cas9OntSeqExpDesign($infile);
+my $design = new Cas9LongReadExpDesign($infile);
 my $NUM_PROC = $design->get_global_opt('NUM_PROC');
 my $BASE_DIR = $design->get_global_opt('BASE_DIR');
 my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
@@ -82,8 +82,9 @@ foreach my $sample ($design->get_sample_names()) {
 		my $bed = $design->sample_opt($sample, 'enrich_bed');
     my $out = $design->get_sample_ref_map_enrich_file($sample);
 		my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
+		my $opts = $bed && -e $bed ? "-L $bed" : ""; # test whether enrich_bed exists
 
-    my $cmd = "$samtools view -L $bed -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
+    my $cmd = "$samtools view $opts -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
     if(!-e "$WORK_DIR/$out") {
       print OUT "$cmd\n";

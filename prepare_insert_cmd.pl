@@ -6,7 +6,7 @@ our $ENV_FILE = 'set_insert_env.sh';
 use strict;
 use warnings;
 use lib '/project/gtplab/pipeline/Cas9_LongRead';
-use Cas9OntSeqExpDesign;
+use Cas9LongReadExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
@@ -16,7 +16,7 @@ my $seqret = 'seqret';
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
-my $design = new Cas9OntSeqExpDesign($infile);
+my $design = new Cas9LongReadExpDesign($infile);
 my $NUM_PROC = $design->get_global_opt('NUM_PROC');
 my $BASE_DIR = $design->get_global_opt('BASE_DIR');
 my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
