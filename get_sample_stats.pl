@@ -7,7 +7,7 @@ use warnings;
 use lib '/project/gtplab/pipeline/Cas9_LongRead';
 use Cas9LongReadExpDesign;
 
-my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
+my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target ref_insert insert_complete insert_incomplete insert_mapped insert_nuclease_mapped insert_donor_mapped insert_trans_mapped insert_helper_mapped insert_ref2_mapped insert_vec2_mapped);
@@ -91,7 +91,8 @@ foreach my $sample ($design->get_sample_names()) {
 		while(my $line = <INFO>) {
 			chomp $line;
 			$ref_insert++;
-			my ($detect_type) = (split(/\t/, $line))[8];
+			my @fields = split(/\t/, $line);
+			my $detect_type = pop @fields;
 			$detect_type eq 'complete' ? $insert_complete++ : $insert_incomplete++;
 		}
 	}

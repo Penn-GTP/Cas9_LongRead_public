@@ -382,10 +382,11 @@ sub get_sample_insert_donor_vec_count {
 	return "$sample\_target_insert_donor_vec_feature_count.tsv";
 }
 
-# get per-sample stats
-sub get_sample_stats_file {
-	my ($self, $sample) = @_;
-	return "$sample\_sample_stats.tsv";
+# get per-exp stats
+sub get_exp_stats_file {
+	my ($self, $exp_file) = @_;
+	my $stats_file = basename($exp_file, qw(.conf .txt .tsv));
+	return "$stats_file\_sample_stats.tsv";
 }
 
 1;

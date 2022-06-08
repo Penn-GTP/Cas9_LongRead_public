@@ -273,24 +273,23 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare sample stat cmd
-	{
-		my $out = $design->get_sample_stats_file($sample);
-
-		my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
   print OUT "\n";
 }
 
+# prepare sample stat cmd
+my $out = $design->get_sample_stats_file($sample, $infile);
+
+my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
+if(!(-e "$BASE_DIR/$out")) {
+	print OUT "$cmd\n";
+}
+else {
+	print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+	print OUT "# $cmd\n";
+}
+
 close(OUT);
+
 # change to exacutable
 chmod 0750, $outfile;
 
