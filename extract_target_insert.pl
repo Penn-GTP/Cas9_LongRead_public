@@ -1,5 +1,5 @@
 #!/bin/env perl
-# This script used to get the sequence and annotation files from the VECTOR GenBank file for remap annotation purpose
+# extract sequence and info of on-target insertions/soft-clips
 use strict;
 use warnings;
 
@@ -49,10 +49,6 @@ my ($chr, $start, $end, $target_name) = split(/\t/, $loc);
 while(my $line = <IN>) {
 	chomp $line;
 	my ($qname, $flag, $rname, $pos, $mapQ, $cigar, $rnext, $pnext, $tlen, $seq, $qual, @tags) = split(/\t/, $line);
-	if($rname ne $chr) {
-		print STDERR "Warning: ROI alignment chromosome does not match the target one, ignore\n";
-		next;
-	}
 	my $qlen = length $seq;
 	my $strand = ($flag & 0x10) ? '-' : '+';
 	my $insert_start = $pos - 1; # 0-based
@@ -73,7 +69,7 @@ while(my $line = <IN>) {
 			$insert_start += $len;
 		}
 		elsif($op eq 'S' || $op eq 'I') { # insert or 5'/3' end clip region
-			if($start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is in the target region
+			if($chr eq $rname && $start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is on target region
 				my $insert_left = $insert_from;
 				my $insert_right = $qlen - $insert_from - $len;
 				my $insert_seq = substr($seq, $insert_from, $len);
@@ -93,6 +89,9 @@ while(my $line = <IN>) {
 				print INFO "$insert_id\t$chr\t$insert_start\t$strand\t$len\t$insert_left\t$insert_right\t$rel_pos\t$detect_type\n";
 			}
 			$insert_from += $len; # update
+		}
+		else {
+			next;
 		}
 	}
 }
