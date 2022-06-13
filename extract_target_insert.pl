@@ -76,7 +76,6 @@ while(my $line = <IN>) {
 			if($start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is in the target region
 				my $insert_left = $insert_from;
 				my $insert_right = $qlen - $insert_from - $len;
-				my $insert_id = "$qname:$chr:$start:$end:$target_name:$insert_start:$strand:$insert_left" . 'L:' . "$len$op:$insert_right" . 'R';
 				my $insert_seq = substr($seq, $insert_from, $len);
 				my $insert_qual = substr($qual, $insert_from, $len);
 				die if(length($insert_seq) != length($insert_qual));
@@ -84,7 +83,9 @@ while(my $line = <IN>) {
 					$insert_seq = reverse($insert_seq);
 					$insert_qual = reverse($insert_qual);
 					$insert_seq =~ tr/ACGTUacgtu/TGCAAtgcaa/;
+					($insert_left, $insert_right) = ($insert_right, $insert_left); # swap left-right size
 				}
+				my $insert_id = "$qname:$chr:$start:$end:$target_name:$insert_start:$strand:$insert_left" . 'L:' . "$len$op:$insert_right" . 'R';
 				my $rel_pos = $insert_start - $start;
 				my $detect_type = $op eq 'I' ? 'complete' : 'incomplete';
 				print FQO "\@$insert_id\n$insert_seq\n+\n$insert_qual\n";
