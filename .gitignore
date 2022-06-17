@@ -29,3 +29,6 @@ data/*
 
 # ignore archives
 archive/**
+
+# ignore symlinks
+picard.jar

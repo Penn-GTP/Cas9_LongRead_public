@@ -61,7 +61,7 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
-# prepare show insert size cmd
+# prepare show target insert size cmd
   {
 		my $in = $design->get_sample_target_insert_info($sample);
 		my $out = $design->get_sample_target_insert_size_distrib($sample);
@@ -76,10 +76,25 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare format vec cmd
+# prepare show off insert size cmd
+  {
+		my $in = $design->get_sample_off_insert_info($sample);
+		my $out = $design->get_sample_off_insert_size_distrib($sample);
+		
+		my $cmd = "$SCRIPT_DIR/$insert_size_script $BASE_DIR/$in $BASE_DIR/$out";
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare format target insert vec cmd
 	{
-		my $in = $design->get_sample_vec_sorted_file($sample);
-		my $out = $design->get_sample_vec_sorted_bed($sample);
+		my $in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $out = $design->get_sample_target_insert_vec_sorted_bed($sample);
 		
 		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
 		if(!(-e "$BASE_DIR/$out")) {
@@ -91,10 +106,10 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare format ref2 cmd
+# prepare format target insert ref2 cmd
   if($design->sample_opt($sample, 'ref2_db')) {
-		my $in = $design->get_sample_ref2_sorted_file($sample);
-		my $out = $design->get_sample_ref2_sorted_bed($sample);
+		my $in = $design->get_sample_target_insert_ref2_sorted_file($sample);
+		my $out = $design->get_sample_target_insert_ref2_sorted_bed($sample);
 		
 		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
 		if(!(-e "$BASE_DIR/$out")) {
@@ -106,10 +121,10 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare format vec2 cmd
+# prepare format target insert vec2 cmd
   if($design->sample_opt($sample, 'vec2_db')) {
-		my $in = $design->get_sample_vec2_sorted_file($sample);
-		my $out = $design->get_sample_vec2_sorted_bed($sample);
+		my $in = $design->get_sample_target_insert_vec2_sorted_file($sample);
+		my $out = $design->get_sample_target_insert_vec2_sorted_bed($sample);
 		
 		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
 		if(!(-e "$BASE_DIR/$out")) {
@@ -121,11 +136,56 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate nuclease map cmd
+# prepare format off insert vec cmd
+	{
+		my $in = $design->get_sample_off_insert_vec_sorted_file($sample);
+		my $out = $design->get_sample_off_insert_vec_sorted_bed($sample);
+		
+		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare format off insert ref2 cmd
+  if($design->sample_opt($sample, 'ref2_db')) {
+		my $in = $design->get_sample_off_insert_ref2_sorted_file($sample);
+		my $out = $design->get_sample_off_insert_ref2_sorted_bed($sample);
+		
+		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare format off insert vec2 cmd
+  if($design->sample_opt($sample, 'vec2_db')) {
+		my $in = $design->get_sample_off_insert_vec2_sorted_file($sample);
+		my $out = $design->get_sample_off_insert_vec2_sorted_bed($sample);
+		
+		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate target insert nuclease map cmd
   if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $gff = $design->get_sample_nuclease_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_bed($sample);
-		my $out = $design->get_sample_insert_nuclease_vec_anno($sample);
+		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_nuclease_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -139,11 +199,11 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate donor map cmd
+# prepare annotate target insert donor map cmd
   if($design->sample_opt($sample, 'donor_gb')) {
 		my $gff = $design->get_sample_donor_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_bed($sample);
-		my $out = $design->get_sample_insert_donor_vec_anno($sample);
+		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_donor_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -157,11 +217,11 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate trans map cmd
+# prepare annotate target insert trans map cmd
   if($design->sample_opt($sample, 'trans_gb')) {
 		my $gff = $design->get_sample_trans_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_bed($sample);
-		my $out = $design->get_sample_insert_trans_vec_anno($sample);
+		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_trans_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -175,11 +235,11 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate helper map cmd
+# prepare annotate target insert helper map cmd
   if($design->sample_opt($sample, 'helper_gb')) {
 		my $gff = $design->get_sample_helper_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_bed($sample);
-		my $out = $design->get_sample_insert_helper_vec_anno($sample);
+		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_helper_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -193,11 +253,11 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate ref2 map cmd
+# prepare annotate target insert ref2 map cmd
   if($design->sample_opt($sample, 'ref2_db')) {
 		my $gff = $design->sample_opt($sample, 'ref2_gff');
-		my $in = $design->get_sample_ref2_sorted_bed($sample);
-		my $out = $design->get_sample_insert_ref2_anno($sample);
+		my $in = $design->get_sample_target_insert_ref2_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_ref2_anno($sample);
 		my $opts = $design->sample_opt($sample, 'ref2_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -211,11 +271,119 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare annotate vec2 map cmd
+# prepare annotate target insert vec2 map cmd
   if($design->sample_opt($sample, 'vec2_db')) {
 		my $gff = $design->sample_opt($sample, 'vec2_gff');
-		my $in = $design->get_sample_vec2_sorted_bed($sample);
-		my $out = $design->get_sample_insert_vec2_anno($sample);
+		my $in = $design->get_sample_target_insert_vec2_sorted_bed($sample);
+		my $out = $design->get_sample_target_insert_vec2_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec2_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert nuclease map cmd
+  if($design->sample_opt($sample, 'nuclease_gb')) {
+		my $gff = $design->get_sample_nuclease_vec_anno($sample);
+		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_nuclease_vec_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert donor map cmd
+  if($design->sample_opt($sample, 'donor_gb')) {
+		my $gff = $design->get_sample_donor_vec_anno($sample);
+		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_donor_vec_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert trans map cmd
+  if($design->sample_opt($sample, 'trans_gb')) {
+		my $gff = $design->get_sample_trans_vec_anno($sample);
+		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_trans_vec_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert helper map cmd
+  if($design->sample_opt($sample, 'helper_gb')) {
+		my $gff = $design->get_sample_helper_vec_anno($sample);
+		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_helper_vec_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert ref2 map cmd
+  if($design->sample_opt($sample, 'ref2_db')) {
+		my $gff = $design->sample_opt($sample, 'ref2_gff');
+		my $in = $design->get_sample_off_insert_ref2_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_ref2_anno($sample);
+		my $opts = $design->sample_opt($sample, 'ref2_anno_opts');
+
+		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare annotate off insert vec2 map cmd
+  if($design->sample_opt($sample, 'vec2_db')) {
+		my $gff = $design->sample_opt($sample, 'vec2_gff');
+		my $in = $design->get_sample_off_insert_vec2_sorted_bed($sample);
+		my $out = $design->get_sample_off_insert_vec2_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec2_anno_opts');
 
 		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
@@ -232,7 +400,8 @@ foreach my $sample ($design->get_sample_names()) {
 # prepare count nuclease map cmd
   if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $gff = $design->get_sample_nuclease_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $out = $design->get_sample_insert_nuclease_vec_count($sample);
 		open(GFF, "<$VEC_DIR/$gff") || die "Unable to open $VEC_DIR/$gff: $!";
 		my @featTypes = get_uniq_feat_types(\*GFF);
@@ -240,7 +409,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $opts = $design->sample_opt($sample, 'nuclease_count_opts');
 
 		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
-		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in";
+		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in_target $BASE_DIR/$in_off";
 
 		if(!(-e "$BASE_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -254,7 +423,8 @@ foreach my $sample ($design->get_sample_names()) {
 # prepare count donor map cmd
   if($design->sample_opt($sample, 'donor_gb')) {
 		my $gff = $design->get_sample_donor_vec_anno($sample);
-		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $out = $design->get_sample_insert_donor_vec_count($sample);
 		open(GFF, "<$VEC_DIR/$gff") || die "Unable to open $VEC_DIR/$gff: $!";
 		my @featTypes = get_uniq_feat_types(\*GFF);
@@ -262,7 +432,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $opts = $design->sample_opt($sample, 'donor_count_opts');
 
 		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
-		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in";
+		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in_target $BASE_DIR/$in_off";
 
 		if(!(-e "$BASE_DIR/$out")) {
 			print OUT "$cmd\n";

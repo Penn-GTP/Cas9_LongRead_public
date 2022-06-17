@@ -1,5 +1,5 @@
 #!/bin/env perl
-# extract sequence and info of on-target insertions/soft-clips
+# extract sequence and info of off-target insertions/soft-clips
 use strict;
 use warnings;
 
@@ -68,8 +68,8 @@ while(my $line = <IN>) {
 		elsif($op eq 'D') {
 			$insert_start += $len;
 		}
-		elsif($op eq 'S' || $op eq 'I') { # insert or 5'/3' end clip region
-			if($chr eq $rname && $start <= $insert_start && $insert_start + 1 <= $end && $len >= $min_insert) { # current insert location is on target region
+		elsif($op eq 'I') { # insert
+			if(!($chr eq $rname && $start <= $insert_start && $insert_start + 1 <= $end) && $len >= $min_insert) { # current insert location is off target region
 				my $insert_left = $insert_from;
 				my $insert_right = $qlen - $insert_from - $len;
 				my $insert_seq = substr($seq, $insert_from, $len);
@@ -82,13 +82,16 @@ while(my $line = <IN>) {
 					($insert_left, $insert_right) = ($insert_right, $insert_left); # swap left-right size
 				}
 				my $insert_id = "$qname:$chr:$start:$end:$target_name:$chr:$strand:$insert_start:$insert_left" . 'L:' . "$len$op:$insert_right" . 'R';
-				my $rel_pos = $insert_start - $start;
+				my $rel_pos = $chr eq $rname ? $insert_start - $start : 'inf';
 				my $detect_type = $op eq 'I' ? 'complete' : 'incomplete';
 				print FQO "\@$insert_id\n$insert_seq\n+\n$insert_qual\n";
 				$fao->write_seq(new Bio::Seq(-display_id => $insert_id, -seq => $insert_seq));
 				print INFO "$insert_id\t$rname\t$insert_start\t$strand\t$len\t$insert_left\t$insert_right\t$rel_pos\t$detect_type\n";
 			}
 			$insert_from += $len; # update
+		}
+		elsif($op eq 'S') { # soft-clip
+		  $insert_from += $len;
 		}
 		else {
 			next;

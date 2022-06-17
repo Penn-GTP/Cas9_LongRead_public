@@ -76,15 +76,31 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare extract enrich alignment
+# prepare filtered alignment
   {
     my $in = $design->get_sample_ref_map_file($sample);
+    my $out = $design->get_sample_ref_map_filtered_file($sample);
+		my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
+
+    my $cmd = "$samtools view -q $min_mapQ -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+
+    if(!-e "$WORK_DIR/$out") {
+      print OUT "$cmd\n";
+    }
+    else {
+			print STDERR "Warning: $WORK_DIR/$out already exists, won't override\n";
+      print OUT "# $cmd\n";
+    }
+  }
+
+# prepare extract enrich alignment
+  {
+    my $in = $design->get_sample_ref_map_filtered_file($sample);
 		my $bed = $design->sample_opt($sample, 'enrich_bed');
     my $out = $design->get_sample_ref_map_enrich_file($sample);
-		my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $opts = $bed && -e $bed ? "-L $bed" : ""; # test whether enrich_bed exists
 
-    my $cmd = "$samtools view $opts -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
+    my $cmd = "$samtools view $opts -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
     if(!-e "$WORK_DIR/$out") {
       print OUT "$cmd\n";
@@ -111,11 +127,11 @@ foreach my $sample ($design->get_sample_names()) {
     }
   }
 
-# sort and index enrich file
+# sorted and index filtered file
   {
-    my $in = $design->get_sample_ref_map_enrich_file($sample);
-    my $out = $design->get_sample_ref_map_enrich_sort_file($sample);
-    my $cmd = "$samtools sort $WORK_DIR/$in -o $BASE_DIR/$out";
+    my $in = $design->get_sample_ref_map_filtered_file($sample);
+    my $out = $design->get_sample_ref_map_filtered_sorted_file($sample);
+    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
@@ -128,11 +144,28 @@ foreach my $sample ($design->get_sample_names()) {
     }
   }
 
-# sort and index target file
+# sorted and index enrich file
+  {
+    my $in = $design->get_sample_ref_map_enrich_file($sample);
+    my $out = $design->get_sample_ref_map_enrich_sorted_file($sample);
+    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
+		$cmd .= "\n$samtools index $BASE_DIR/$out";
+
+    if(!-e "$BASE_DIR/$out") {
+      print OUT "$cmd\n";
+    }
+    else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
+      print OUT "# $cmd\n";
+    }
+  }
+
+# sorted and index target file
   {
     my $in = $design->get_sample_ref_map_target_file($sample);
-    my $out = $design->get_sample_ref_map_target_sort_file($sample);
-    my $cmd = "$samtools sort $WORK_DIR/$in -o $BASE_DIR/$out";
+    my $out = $design->get_sample_ref_map_target_sorted_file($sample);
+    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {

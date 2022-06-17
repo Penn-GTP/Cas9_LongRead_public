@@ -214,6 +214,12 @@ sub get_sample_ref_map_file {
 	return "$sample\_ref_map.bam";
 }
 
+# get per-sample ref map filtered file
+sub get_sample_ref_map_filtered_file {
+	my ($self, $sample) = @_;
+	return "$sample\_ref_map_filtered.bam";
+}
+
 # get per-sample ref map enrich file
 sub get_sample_ref_map_enrich_file {
 	my ($self, $sample) = @_;
@@ -226,16 +232,52 @@ sub get_sample_ref_map_target_file {
 	return "$sample\_ref_map_target.bam";
 }
 
-# get per-sample ref enrich sort file
-sub get_sample_ref_map_enrich_sort_file {
+# get per-sample ref filtered sorted file
+sub get_sample_ref_map_filtered_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_ref_map_filtered_sorted.bam";
+}
+
+# get per-sample ref enrich sorted file
+sub get_sample_ref_map_enrich_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_ref_map_enrich_sorted.bam";
 }
 
-# get per-sample ref target sort file
-sub get_sample_ref_map_target_sort_file {
+# get per-sample ref target sorted file
+sub get_sample_ref_map_target_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_ref_map_target_sorted.bam";
+}
+
+# get per-sample ref target insert pos
+sub get_sample_target_insert_pos {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_pos.bed";
+}
+
+# get per-sample ref off insert pos
+sub get_sample_off_insert_pos {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_pos.bed";
+}
+
+# get per-sample ref target insert merged
+sub get_sample_target_insert_merged {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_pos_merged.bed";
+}
+
+# get per-sample ref target insert merged
+sub get_sample_target_insert_merged {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_pos_merged.bed";
+}
+
+# get per-sample ref off insert bed
+sub get_sample_off_insert_bed {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_pos.bed";
 }
 
 # get per-sample ref target insert fastq file
@@ -256,58 +298,178 @@ sub get_sample_target_insert_info {
 	return "$sample\_target_insert_info.tsv";
 }
 
-# get per-sample vec map file
-sub get_sample_vec_map_file {
+# get per-sample ref off insert fastq file
+sub get_sample_off_insert_fastq {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_seq.fastq";
+}
+
+# get per-sample off insert fasta file
+sub get_sample_off_insert_fasta {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_seq.fasta";
+}
+
+# get per-sample off insert info file
+sub get_sample_off_insert_info {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_info.tsv";
+}
+
+# get per-sample target insert vec map file
+sub get_sample_target_insert_vec_map_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec_map.bam";
 }
 
-# get per-sample ref2 map file
-sub get_sample_ref2_map_file {
+# get per-sample target insert ref2 map file
+sub get_sample_target_insert_ref2_map_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_map.bam";
 }
 
-# get per-sample vec2 map file
-sub get_sample_vec2_map_file {
+# get per-sample target insert vec2 map file
+sub get_sample_target_insert_vec2_map_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_map.bam";
 }
 
-# get per-sample vec filtered file
-sub get_sample_vec_filtered_file {
+# get per-sample target insert vec filtered file
+sub get_sample_target_insert_vec_filtered_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec_map_filtered.bam";
 }
 
-# get per-sample ref2 filtered file
-sub get_sample_ref2_filtered_file {
+# get per-sample target insert ref2 filtered file
+sub get_sample_target_insert_ref2_filtered_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_map_filtered.bam";
 }
 
-# get per-sample vec2 filtered file
-sub get_sample_vec2_filtered_file {
+# get per-sample target insert vec2 filtered file
+sub get_sample_target_insert_vec2_filtered_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_map_filtered.bam";
 }
 
-# get per-sample vec sorted file
-sub get_sample_vec_sorted_file {
+# get per-sample target insert vec sorted file
+sub get_sample_target_insert_vec_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec_map_filtered_sorted.bam";
 }
 
-# get per-sample ref2 sorted file
-sub get_sample_ref2_sorted_file {
+# get per-sample target insert ref2 sorted file
+sub get_sample_target_insert_ref2_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_map_filtered_sorted.bam";
 }
 
-# get per-sample vec2 sorted file
-sub get_sample_vec2_sorted_file {
+# get per-sample target insert vec2 sorted file
+sub get_sample_target_insert_vec2_sorted_file {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_map_filtered_sorted.bam";
+}
+
+# get per-sample off insert vec map file
+sub get_sample_off_insert_vec_map_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map.bam";
+}
+
+# get per-sample off insert ref2 map file
+sub get_sample_off_insert_ref2_map_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref2_map.bam";
+}
+
+# get per-sample off insert vec2 map file
+sub get_sample_off_insert_vec2_map_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec2_map.bam";
+}
+
+# get per-sample off insert vec filtered file
+sub get_sample_off_insert_vec_filtered_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_filtered.bam";
+}
+
+# get per-sample off insert ref2 filtered file
+sub get_sample_off_insert_ref2_filtered_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref2_map_filtered.bam";
+}
+
+# get per-sample off insert vec2 filtered file
+sub get_sample_off_insert_vec2_filtered_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec2_map_filtered.bam";
+}
+
+# get per-sample off insert vec sorted file
+sub get_sample_off_insert_vec_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_filtered_sorted.bam";
+}
+
+# get per-sample off insert ref2 sorted file
+sub get_sample_off_insert_ref2_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref2_map_filtered_sorted.bam";
+}
+
+# get per-sample off insert vec2 sorted file
+sub get_sample_off_insert_vec2_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec2_map_filtered_sorted.bam";
+}
+
+# get per-sample target insert vec inames
+sub get_sample_target_insert_vec_inames {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_vec_map_inames.txt";
+}
+
+# get per-sample off insert vec inames
+sub get_sample_off_insert_vec_inames {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_inames.txt";
+}
+
+# get per-sample target insert vec rnames
+sub get_sample_target_insert_vec_rnames {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_vec_map_rnames.txt";
+}
+
+# get per-sample off insert vec rnames
+sub get_sample_off_insert_vec_rnames {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_rnames.txt";
+}
+
+# get per-sample target insert vec fasta
+sub get_sample_target_insert_vec_fasta {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_vec_map_seq.fasta";
+}
+
+# get per-sample off insert vec fasta
+sub get_sample_off_insert_vec_fasta {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_seq.fasta";
+}
+
+# get per-sample target insert ref sorted file
+sub get_sample_target_insert_ref_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_ref_map_sorted.bam";
+}
+
+# get per-sample off insert ref sorted file
+sub get_sample_off_insert_ref_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref_map_sorted.bam";
 }
 
 # get per-sample target insert size distribution figure
@@ -316,70 +478,130 @@ sub get_sample_target_insert_size_distrib {
 	return "$sample\_target_insert_size_distrib.pdf";
 }
 
-# get per-sample vec sorted bed
-sub get_sample_vec_sorted_bed {
+# get per-sample target insert vec sorted bed
+sub get_sample_target_insert_vec_sorted_bed {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec_map_filtered_sorted.bed";
 }
 
-# get per-sample ref2 sorted bed
-sub get_sample_ref2_sorted_bed {
+# get per-sample target insert ref2 sorted bed
+sub get_sample_target_insert_ref2_sorted_bed {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_map_filtered_sorted.bed";
 }
 
-# get per-sample vec2 sorted bed
-sub get_sample_vec2_sorted_bed {
+# get per-sample target insert vec2 sorted bed
+sub get_sample_target_insert_vec2_sorted_bed {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_map_filtered_sorted.bed";
 }
 
-# get per-sample insert nuclease_vec anno
-sub get_sample_insert_nuclease_vec_anno {
+# get per-sample off insert size distribution figure
+sub get_sample_off_insert_size_distrib {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_size_distrib.pdf";
+}
+
+# get per-sample off insert vec sorted bed
+sub get_sample_off_insert_vec_sorted_bed {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_map_filtered_sorted.bed";
+}
+
+# get per-sample off insert ref2 sorted bed
+sub get_sample_off_insert_ref2_sorted_bed {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref2_map_filtered_sorted.bed";
+}
+
+# get per-sample off insert vec2 sorted bed
+sub get_sample_off_insert_vec2_sorted_bed {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec2_map_filtered_sorted.bed";
+}
+
+# get per-sample target insert nuclease_vec anno
+sub get_sample_target_insert_nuclease_vec_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_nuclease_vec_anno.gff3";
 }
 
-# get per-sample donor_vec anno
-sub get_sample_insert_donor_vec_anno {
+# get per-sample target insert donor_vec anno
+sub get_sample_target_insert_donor_vec_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_donor_vec_anno.gff3";
 }
 
-# get per-sample insert trans_vec anno
-sub get_sample_insert_trans_vec_anno {
+# get per-sample target insert trans_vec anno
+sub get_sample_target_insert_trans_vec_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_trans_vec_anno.gff3";
 }
 
-# get per-sample helper_vec anno
-sub get_sample_insert_helper_vec_anno {
+# get per-sample target insert helper_vec anno
+sub get_sample_target_insert_helper_vec_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_helper_vec_anno.gff3";
 }
 
-# get per-sample insert ref2 anno file
-sub get_sample_insert_ref2_anno {
+# get per-sample target insert ref2 anno file
+sub get_sample_target_insert_ref2_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_ref2_anno.gff3";
 }
 
-# get per-sample insert vec2 anno file
-sub get_sample_insert_vec2_anno {
+# get per-sample target insert vec2 anno file
+sub get_sample_target_insert_vec2_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_anno.gff3";
+}
+
+# get per-sample off insert nuclease_vec anno
+sub get_sample_off_insert_nuclease_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_nuclease_vec_anno.gff3";
+}
+
+# get per-sample off insert donor_vec anno
+sub get_sample_off_insert_donor_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_donor_vec_anno.gff3";
+}
+
+# get per-sample off insert trans_vec anno
+sub get_sample_off_insert_trans_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_trans_vec_anno.gff3";
+}
+
+# get per-sample off insert helper_vec anno
+sub get_sample_off_insert_helper_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_helper_vec_anno.gff3";
+}
+
+# get per-sample off insert ref2 anno file
+sub get_sample_off_insert_ref2_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_ref2_anno.gff3";
+}
+
+# get per-sample off insert vec2 anno file
+sub get_sample_off_insert_vec2_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec2_anno.gff3";
 }
 
 # get per-sample insert nuclease_vec feature count
 sub get_sample_insert_nuclease_vec_count {
 	my ($self, $sample) = @_;
-	return "$sample\_target_insert_nuclease_vec_feature_count.tsv";
+	return "$sample\_insert_nuclease_vec_feature_count.tsv";
 }
 
 # get per-sample insert donor_vec feature count
 sub get_sample_insert_donor_vec_count {
 	my ($self, $sample) = @_;
-	return "$sample\_target_insert_donor_vec_feature_count.tsv";
+	return "$sample\_insert_donor_vec_feature_count.tsv";
 }
 
 # get per-exp stats

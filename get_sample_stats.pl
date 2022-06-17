@@ -10,7 +10,9 @@ use Cas9LongReadExpDesign;
 my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
-my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target ref_insert insert_complete insert_incomplete insert_mapped insert_nuclease_mapped insert_donor_mapped insert_trans_mapped insert_helper_mapped insert_ref2_mapped insert_vec2_mapped);
+my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
+target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped
+off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -69,7 +71,7 @@ foreach my $sample ($design->get_sample_names()) {
 # get ref enrich
   my $ref_enrich;
 	{
-		my $in = $design->get_sample_ref_map_enrich_sort_file($sample);
+		my $in = $design->get_sample_ref_map_enrich_sorted_file($sample);
 		$ref_enrich = `$samtools view $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
 		chomp $ref_enrich;
 	}
@@ -77,88 +79,126 @@ foreach my $sample ($design->get_sample_names()) {
 # get ref target
   my $ref_target;
 	{
-		my $in = $design->get_sample_ref_map_target_sort_file($sample);
+		my $in = $design->get_sample_ref_map_target_sorted_file($sample);
 		$ref_target = `$samtools view $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
 		chomp $ref_target;
 	}
 
-# get insert info
-  my ($ref_insert, $insert_complete, $insert_incomplete) = (0, 0, 0);
+# get taget insert info
+  my ($target_insert, $target_complete, $target_incomplete) = (0, 0, 0);
 	{
 		my $in = $design->get_sample_target_insert_info($sample);
 		open(INFO, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
 		<INFO>; # discard header
 		while(my $line = <INFO>) {
 			chomp $line;
-			$ref_insert++;
+			$target_insert++;
 			my @fields = split(/\t/, $line);
 			my $detect_type = pop @fields;
-			$detect_type eq 'complete' ? $insert_complete++ : $insert_incomplete++;
+			$detect_type eq 'complete' ? $target_complete++ : $target_incomplete++;
+		}
+	}
+
+# get taget insert info
+  my ($off_insert, $off_complete, $off_incomplete) = (0, 0, 0);
+	{
+		my $in = $design->get_sample_off_insert_info($sample);
+		open(INFO, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
+		<INFO>; # discard header
+		while(my $line = <INFO>) {
+			chomp $line;
+			$off_insert++;
+			my @fields = split(/\t/, $line);
+			my $detect_type = pop @fields;
+			$detect_type eq 'complete' ? $off_complete++ : $off_incomplete++;
 		}
 	}
 
 # get vec mapped
-	my $vec_mapped = 0;
+	my ($target_vec_mapped, $off_vec_mapped) = (0, 0);
 	{
-		my $in = $design->get_sample_vec_sorted_file($sample);
-		$vec_mapped = `$samtools view $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $vec_mapped;
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
+		$target_vec_mapped = `$samtools view $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		chomp $target_vec_mapped;
+		$off_vec_mapped = `$samtools view $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $off_vec_mapped;
 	}
 
 # get nuclease vec mapped
-	my $nuclease_mapped = 0;
+	my ($target_nuclease_mapped, $off_nuclease_mapped) = (0, 0);
 	if($design->sample_opt($sample, 'nuclease_gb')) {
-		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $bed = $design->get_sample_nuclease_vec_region($sample);
-		$nuclease_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $nuclease_mapped;
+		$target_nuclease_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_nuclease_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_nuclease_mapped;
+		chomp $off_nuclease_mapped;
 	}
 
 # get donor vec mapped
-	my $donor_mapped = 0;
+	my ($target_donor_mapped, $off_donor_mapped) = (0, 0);
 	if($design->sample_opt($sample, 'donor_gb')) {
-		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $bed = $design->get_sample_donor_vec_region($sample);
-		$donor_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $donor_mapped;
+		$target_donor_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_donor_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_donor_mapped;
+		chomp $off_donor_mapped;
 	}
 
 # get trans vec mapped
-	my $trans_mapped = 0;
+	my ($target_trans_mapped, $off_trans_mapped) = (0, 0);
 	if($design->sample_opt($sample, 'trans_gb')) {
-		my $in = $design->get_sample_vec_sorted_file($sample);
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $bed = $design->get_sample_trans_vec_region($sample);
-		$trans_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $trans_mapped;
+		$target_trans_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_trans_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_trans_mapped;
+		chomp $off_trans_mapped;
 	}
 
 # get helper vec mapped
-	my $helper_mapped = 0;
-  if($design->sample_opt($sample, 'helper_gb')) {
-		my $in = $design->get_sample_vec_sorted_file($sample);
+	my ($target_helper_mapped, $off_helper_mapped) = (0, 0);
+	if($design->sample_opt($sample, 'helper_gb')) {
+		my $in_target = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec_sorted_file($sample);
 		my $bed = $design->get_sample_helper_vec_region($sample);
-		$helper_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $helper_mapped;
+		$target_helper_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_helper_mapped = `$samtools view -L $VEC_DIR/$bed $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_helper_mapped;
+		chomp $off_helper_mapped;
 	}
 
 # get ref2 mapped
-	my $ref2_mapped = 'NA';
+	my ($target_ref2_mapped, $off_ref2_mapped) = qw(NA NA);
 	if($design->get_sample_opts($sample, 'ref2_db')) {
-		my $in = $design->get_sample_ref2_sorted_file($sample);
-		$ref2_mapped = `$samtools view $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $ref2_mapped;
+		my $in_target = $design->get_sample_target_insert_ref2_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_ref2_sorted_file($sample);
+		$target_ref2_mapped = `$samtools view $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_ref2_mapped = `$samtools view $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_ref2_mapped;
+		chomp $off_ref2_mapped;
 	}
 
 # get vec2 mapped
-	my $vec2_mapped = 'NA';
+	my ($target_vec2_mapped, $off_vec2_mapped) = qw(NA NA);
 	if($design->get_sample_opts($sample, 'vec2_db')) {
-		my $in = $design->get_sample_vec2_sorted_file($sample);
-		$vec2_mapped = `$samtools view $BASE_DIR/$in | cut -f1 | sort -u | wc -l`;
-		chomp $vec2_mapped;
+		my $in_target = $design->get_sample_target_insert_vec2_sorted_file($sample);
+		my $in_off = $design->get_sample_off_insert_vec2_sorted_file($sample);
+		$target_vec2_mapped = `$samtools view $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
+		$off_vec2_mapped = `$samtools view $BASE_DIR/$in_off | cut -f1 | sort -u | wc -l`;
+		chomp $target_vec2_mapped;
+		chomp $off_vec2_mapped;
 	}
 
 # output
-  print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t$ref_insert\t$insert_complete\t$insert_incomplete\t$vec_mapped\t$nuclease_mapped\t$donor_mapped\t$trans_mapped\t$helper_mapped\t$ref2_mapped\t$vec2_mapped\n";
+  print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
+	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t",
+	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\n";
 }
 
 close(OUT);
