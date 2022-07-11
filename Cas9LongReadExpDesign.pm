@@ -262,16 +262,28 @@ sub get_sample_off_insert_pos {
 	return "$sample\_off_insert_pos.bed";
 }
 
-# get per-sample ref target insert merged
-sub get_sample_target_insert_merged {
+# get per-sample ref target insert pos sorted
+sub get_sample_target_insert_pos_sorted {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_pos_sorted.bed";
+}
+
+# get per-sample ref off insert pos sorted
+sub get_sample_off_insert_pos_sorted {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_pos_sorted.bed";
+}
+
+# get per-sample ref target insert pos merged
+sub get_sample_target_insert_pos_merged {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_pos_merged.bed";
 }
 
-# get per-sample ref target insert merged
-sub get_sample_target_insert_merged {
+# get per-sample ref off insert merged
+sub get_sample_off_insert_pos_merged {
 	my ($self, $sample) = @_;
-	return "$sample\_target_insert_pos_merged.bed";
+	return "$sample\_off_insert_pos_merged.bed";
 }
 
 # get per-sample ref off insert bed

@@ -82,7 +82,7 @@ foreach my $sample ($design->get_sample_names()) {
     my $out = $design->get_sample_ref_map_filtered_file($sample);
 		my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 
-    my $cmd = "$samtools view -q $min_mapQ -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+    my $cmd = "$samtools view -q $min_mapQ -F 0x900 -b -o $WORK_DIR/$out $WORK_DIR/$in"; # filter for primary alignment only
 
     if(!-e "$WORK_DIR/$out") {
       print OUT "$cmd\n";
@@ -131,7 +131,7 @@ foreach my $sample ($design->get_sample_names()) {
   {
     my $in = $design->get_sample_ref_map_filtered_file($sample);
     my $out = $design->get_sample_ref_map_filtered_sorted_file($sample);
-    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
+    my $cmd = "$samtools sort $WORK_DIR/$in -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
@@ -148,7 +148,7 @@ foreach my $sample ($design->get_sample_names()) {
   {
     my $in = $design->get_sample_ref_map_enrich_file($sample);
     my $out = $design->get_sample_ref_map_enrich_sorted_file($sample);
-    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
+    my $cmd = "$samtools sort $WORK_DIR/$in -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
@@ -165,7 +165,7 @@ foreach my $sample ($design->get_sample_names()) {
   {
     my $in = $design->get_sample_ref_map_target_file($sample);
     my $out = $design->get_sample_ref_map_target_sorted_file($sample);
-    my $cmd = "$samtools sorted $WORK_DIR/$in -o $BASE_DIR/$out";
+    my $cmd = "$samtools sort $WORK_DIR/$in -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {

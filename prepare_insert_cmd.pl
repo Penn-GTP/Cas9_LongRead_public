@@ -10,10 +10,12 @@ use Cas9LongReadExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
-my $target_insert_script = 'extract_target_insert.pl';
-my $off_insert_script = 'extract_off_insert.pl';
+my $target_pos_script = 'get_target_insert_pos.pl';
+my $off_pos_script = 'get_off_insert_pos.pl';
+my $extract_insert_script = 'extract_insert.pl';
 my $filter_fasta_script = 'filter_fasta_file.pl';
 my $samtools = 'samtools';
+my $bedtools = 'bedtools';
 my $picard = 'picard.jar';
 
 my $infile = shift or die $usage;
@@ -26,6 +28,8 @@ my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 my $DEFAULT_TECH = 'ont';
+my $DEFAULT_MIN_INSERT = 20;
+my $DEFAULT_MAX_DIST = 500;
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -61,16 +65,61 @@ print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
 	my $tech = $design->sample_opt($sample, 'longread_tech') ? $design->sample_opt($sample, 'longread_tech') : $DEFAULT_TECH;
-# prepare extract target and index cmd
+	my $min_insert = $design->sample_opt($sample, 'min_insert') ? $design->sample_opt($sample, 'min_insert') : $DEFAULT_MIN_INSERT;
+	my $max_dist = $design->sample_opt($sample, 'max_dist') ? $design->sample_opt($sample, 'max_dist') : $DEFAULT_MAX_DIST;
+# prepare get target insert pos cmd
 	{
 		my $bed = $design->sample_opt($sample, 'target_bed');
-		my $min_insert = $design->sample_opt($sample, 'min_insert');
 		my $in = $design->get_sample_ref_map_target_sorted_file($sample);
+		my $out = $design->get_sample_target_insert_pos($sample);
+		my $sorted = $design->get_sample_target_insert_pos_sorted($sample);
+		my $merged = $design->get_sample_target_insert_pos_merged($sample);
+		
+		my $cmd = "$SCRIPT_DIR/$target_pos_script -t $bed -i $BASE_DIR/$in -o $WORK_DIR/$out --min-insert $min_insert --max-dist $max_dist";
+		$cmd .= "\n$bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted";
+		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged";
+
+		if(!(-e "$WORK_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $WORK_DIR/$out already exists, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare get off insert pos cmd
+	{
+		my $bed = $design->sample_opt($sample, 'target_bed');
+		my $in = $design->get_sample_ref_map_filtered_sorted_file($sample);
+		my $out = $design->get_sample_off_insert_pos($sample);
+		my $sorted = $design->get_sample_off_insert_pos_sorted($sample);
+		my $merged = $design->get_sample_off_insert_pos_merged($sample);
+		
+		my $cmd = "$SCRIPT_DIR/$off_pos_script -t $bed -i $BASE_DIR/$in -o $WORK_DIR/$out --min-insert $min_insert --max-dist $max_dist";
+		$cmd .= "\n$bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted";
+		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged";
+
+		if(!(-e "$WORK_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $WORK_DIR/$out already exists, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
+			print OUT "# $cmd\n";
+		}
+	}
+
+# prepare extract target and index cmd
+	{
+		my $in = $design->get_sample_target_insert_pos_sorted($sample);
+		my $read = $design->sample_opt($sample, 'read_fastq');
 		my $fq_out = $design->get_sample_target_insert_fastq($sample);
 		my $fa_out = $design->get_sample_target_insert_fasta($sample);
 		my $info_out = $design->get_sample_target_insert_info($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$target_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out --min-insert $min_insert";
+		my $cmd = "$SCRIPT_DIR/$extract_insert_script -i $WORK_DIR/$in -s $read -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$fa_out";
 
 		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out" && -e "$BASE_DIR/$info_out")) {
@@ -85,14 +134,13 @@ foreach my $sample ($design->get_sample_names()) {
 
 # prepare extract off and index cmd
 	{
-		my $bed = $design->sample_opt($sample, 'target_bed');
-		my $min_insert = $design->sample_opt($sample, 'min_insert');
-		my $in = $design->get_sample_ref_map_filtered_sorted_file($sample);
+		my $in = $design->get_sample_off_insert_pos_sorted($sample);
+		my $read = $design->sample_opt($sample, 'read_fastq');
 		my $fq_out = $design->get_sample_off_insert_fastq($sample);
 		my $fa_out = $design->get_sample_off_insert_fasta($sample);
 		my $info_out = $design->get_sample_off_insert_info($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$off_insert_script -t $bed -i $BASE_DIR/$in -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out --min-insert $min_insert";
+		my $cmd = "$SCRIPT_DIR/$extract_insert_script -i $WORK_DIR/$in -s $read -fq $BASE_DIR/$fq_out -fa $BASE_DIR/$fa_out -info $BASE_DIR/$info_out";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$fa_out";
 
 		if(!(-e "$BASE_DIR/$fq_out" && -e "$BASE_DIR/$fa_out" && -e "$BASE_DIR/$info_out")) {
@@ -226,7 +274,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_target_insert_vec_map_file($sample);
 		my $out = $design->get_sample_target_insert_vec_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -242,7 +290,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_target_insert_ref2_map_file($sample);
 		my $out = $design->get_sample_target_insert_ref2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -258,7 +306,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_target_insert_vec2_map_file($sample);
 		my $out = $design->get_sample_target_insert_vec2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -325,7 +373,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_off_insert_vec_map_file($sample);
 		my $out = $design->get_sample_off_insert_vec_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -341,7 +389,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_off_insert_ref2_map_file($sample);
 		my $out = $design->get_sample_off_insert_ref2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -357,7 +405,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 		my $in = $design->get_sample_off_insert_vec2_map_file($sample);
 		my $out = $design->get_sample_off_insert_vec2_filtered_file($sample);
 
-		my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in";
+		my $cmd = "$samtools view -q $min_mapQ -b -o $WORK_DIR/$out $WORK_DIR/$in";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -520,7 +568,9 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     my $in = $design->get_sample_ref_map_filtered_sorted_file($sample);
     my $list = $design->get_sample_target_insert_vec_rnames($sample);
     my $out = $design->get_sample_target_insert_ref_sorted_file($sample);
-    my $cmd = "java -jar $SCRIPT_DIR/$picard FilterSamReads --FILTER includeReadList -I $BASE_DIR/$in -O $BASE_DIR/$out --READ_LIST_FILE $WORK_DIR/$list";
+		
+    my $cmd = "if [ -s $WORK_DIR/$list ]; then java -jar $SCRIPT_DIR/$picard FilterSamReads --FILTER includeReadList -I $BASE_DIR/$in -O $BASE_DIR/$out --READ_LIST_FILE $WORK_DIR/$list;";
+		$cmd .= "\nelse $samtools view -H $BASE_DIR/$in -b -o $BASE_DIR/$out; fi;";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
@@ -538,7 +588,9 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     my $in = $design->get_sample_ref_map_filtered_sorted_file($sample);
     my $list = $design->get_sample_off_insert_vec_rnames($sample);
     my $out = $design->get_sample_off_insert_ref_sorted_file($sample);
-    my $cmd = "java -jar $SCRIPT_DIR/$picard FilterSamReads --FILTER includeReadList -I $BASE_DIR/$in -O $BASE_DIR/$out --READ_LIST_FILE $WORK_DIR/$list";
+
+    my $cmd = "if [ -s $WORK_DIR/$list ]; then java -jar $SCRIPT_DIR/$picard FilterSamReads --FILTER includeReadList -I $BASE_DIR/$in -O $BASE_DIR/$out --READ_LIST_FILE $WORK_DIR/$list;";
+		$cmd .= "\nelse $samtools view -H $BASE_DIR/$in -b -o $BASE_DIR/$out; fi;";
 		$cmd .= "\n$samtools index $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
