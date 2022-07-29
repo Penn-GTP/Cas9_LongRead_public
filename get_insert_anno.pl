@@ -54,7 +54,7 @@ while(my $line = <IN>) {
 		my ($q_len) = $name =~ /:(\d+)[IS]:/;
 
 # build target2query index, all coordinates are 0-based
-		my @r2q_idx = 0 x $end;
+		my @r2q_idx = 0 x $t_len;
 		my $i = $start; # index on target
 			my $j = 0; # index on query
 			while($cigar =~ /(\d+)([MIDNSHPX=])/g) {
