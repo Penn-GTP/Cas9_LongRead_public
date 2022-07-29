@@ -47,7 +47,7 @@ while(my $line = <IN>) {
     exit;
   }
 	my ($chr, $start, $end, $name, $score, $strand, $cigar, $chr2, $src, $type, $start2, $end2, $score2, $strand2, $frame, $attr, $over_len) = @fields;
-	$start2--; # use 0-based start
+	$start2--;
 
 	if((any { $type eq $_ } @inc_types) || (none { $type eq $_ } @exc_types) ) {
 		my $t_len = $end - $start;
@@ -55,26 +55,26 @@ while(my $line = <IN>) {
 
 # build target2query index, all coordinates are 0-based
 		my @r2q_idx = 0 x $t_len;
-		my $i = $start; # index on target
-			my $j = 0; # index on query
-			while($cigar =~ /(\d+)([MIDNSHPX=])/g) {
-				my ($len, $op) = ($1, $2);
-				for(my $k = 0; $k < $len; $k++) {
-					$r2q_idx[$i] = $j;
-					if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'D' || $op eq 'N') {
-						$i++;
-					}
-					if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'I' || $op eq 'S') {
-						$j++;
-					}
+		my $i = 0; # index on target
+		my $j = 0; # index on query
+		while($cigar =~ /(\d+)([MIDNSHPX=])/g) {
+			my ($len, $op) = ($1, $2);
+			for(my $k = 0; $k < $len; $k++) {
+				$r2q_idx[$i] = $j;
+				if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'D' || $op eq 'N') {
+					$i++;
+				}
+				if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'I' || $op eq 'S') {
+					$j++;
 				}
 			}
+		}
 
 		my $over_start = $start > $start2 ? $start : $start2;
 		my $over_end = $end < $end2 ? $end : $end2;
 
-		my $over_from = $r2q_idx[$over_start] + 1; # 1-based for GFF output
-		my $over_to = $r2q_idx[$over_end - 1] + 1;
+		my $over_from = $r2q_idx[$over_start - $start] + 1; # 1-based for GFF output
+		my $over_to = $r2q_idx[$over_end - 1 - $start] + 1;
 
 		my $over_strand = $strand eq $strand2 ? '+' : '-';
 
