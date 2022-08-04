@@ -11,8 +11,8 @@ my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
-target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped
-off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped);
+target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_donor_basic target_insert_functional_donor_full
+off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_donor_basic off_insert_functional_donor_full);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -22,6 +22,7 @@ my $BASE_DIR = $design->get_global_opt('BASE_DIR');
 my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $VEC_DIR = $design->get_global_opt('VEC_DIR');
+my $FEATURE_TAG = $design->get_global_opt('FEATURE_TAG');
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -195,10 +196,88 @@ foreach my $sample ($design->get_sample_names()) {
 		chomp $off_vec2_mapped;
 	}
 
+# get functional donor counts
+	my ($target_functional_donor_basic, $off_functional_donor_basic, $target_functional_donor_full, $off_functional_donor_full) = (0, 0, 0, 0);
+	if($design->sample_opt($sample, 'donor_gb')) {
+		my @feat_basic = split(/\|/, $design->sample_opt($sample, 'functional_donor_feature_basic'));
+		my @feat_full = split(/\|/, $design->sample_opt($sample, 'functional_donor_feature_full'));
+    {
+		  open(GFF, "<", $design->get_sample_target_insert_donor_vec_anno($sample));
+			my %name2feat = get_anno_summ(\*GFF);
+			foreach my $feats (values %name2feat) {
+				my @feats_rev = reverse(@$feats);
+				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
+					$target_functional_donor_basic++;
+				}
+				if(is_sub_array($feats, \@feat_full) || is_sub_array(\@feats_rev, \@feat_full)) {
+					$target_functional_donor_full++;
+				}
+			}
+			close(GFF);
+    }
+
+    {
+		  open(GFF, "<", $design->get_sample_off_insert_donor_vec_anno($sample));
+			my %name2feat = get_anno_summ(\*GFF);
+			foreach my $feats (values %name2feat) {
+				my @feats_rev = reverse(@$feats);
+				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
+					$off_functional_donor_basic++;
+				}
+				if(is_sub_array($feats, \@feat_full) || is_sub_array(\@feats_rev, \@feat_full)) {
+					$off_functional_donor_full++;
+				}
+			}
+			close(GFF);
+    }
+	}
+
 # output
   print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
-	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t",
-	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\n";
+	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_donor_basic\t$target_functional_donor_full\t",
+	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_donor_basic\t$off_functional_donor_full\n";
 }
 
 close(OUT);
+
+# subroutine definitions
+sub get_anno_summ {
+	my $fh = shift;
+	my %name2feat;
+	while(my $line = <$fh>) {
+		chomp $line;
+		next if($line =~ /^#/);
+		my ($name, $src, $type, $start, $end, $score, $strand, $frame, $attrs) = split(/\t/, $line);
+    foreach my $attr (split(/;/, $attrs)) {
+			my ($tag, $val) = split(/=/, $attr);
+			if($tag eq $FEATURE_TAG) {
+				push(@{$name2feat{$name}}, $val);
+			}
+		}
+	}
+	return %name2feat;
+}
+
+sub is_sub_array {
+	my ($A, $B) = @_;
+	my $n = @$A;
+	my $m = @$B;
+	my ($i, $j) = (0, 0);
+	while($i < $n && $j < $m) {
+		if($A->[$i] eq $B->[$j]) {
+			$i++;
+			$j++;
+
+			if($j == $m) {
+				return 1;
+			}
+		}
+		else {
+			$i = $i - $j + 1;
+			$j = 0;
+		}
+	}
+
+	return 0;
+}
+
