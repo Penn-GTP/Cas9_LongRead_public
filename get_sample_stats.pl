@@ -23,6 +23,8 @@ my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $FEATURE_TAG = $design->get_global_opt('FEATURE_TAG');
+my $MIN_COVER_RATIO = 0.9; # default value
+$MIN_COVER_RATIO = $design->get_global_opt('MIN_COVER_RATIO');
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -203,7 +205,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my @feat_full = split(/\|/, $design->sample_opt($sample, 'functional_donor_feature_full'));
     {
 		  open(GFF, "<", $design->get_sample_target_insert_donor_vec_anno($sample));
-			my %name2feat = get_anno_summ(\*GFF);
+			my %name2feat = get_anno_summ(\*GFF, $MIN_COVER_RATIO);
 			foreach my $feats (values %name2feat) {
 				my @feats_rev = reverse(@$feats);
 				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
@@ -218,7 +220,7 @@ foreach my $sample ($design->get_sample_names()) {
 
     {
 		  open(GFF, "<", $design->get_sample_off_insert_donor_vec_anno($sample));
-			my %name2feat = get_anno_summ(\*GFF);
+			my %name2feat = get_anno_summ(\*GFF, $MIN_COVER_RATIO);
 			foreach my $feats (values %name2feat) {
 				my @feats_rev = reverse(@$feats);
 				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
@@ -243,16 +245,24 @@ close(OUT);
 # subroutine definitions
 sub get_anno_summ {
 	my $fh = shift;
+	my $min_ratio = shift;
 	my %name2feat;
 	while(my $line = <$fh>) {
 		chomp $line;
 		next if($line =~ /^#/);
 		my ($name, $src, $type, $start, $end, $score, $strand, $frame, $attrs) = split(/\t/, $line);
+		my ($label, $cover_ratio);
     foreach my $attr (split(/;/, $attrs)) {
 			my ($tag, $val) = split(/=/, $attr);
 			if($tag eq $FEATURE_TAG) {
-				push(@{$name2feat{$name}}, $val);
+				$label = $val;
 			}
+			elsif($tag eq 'CoverRatio') {
+				$cover_ratio = $val;
+			}
+		}
+		if($cover_ratio >= $min_ratio) {
+				push(@{$name2feat{$name}}, $label);
 		}
 	}
 	return %name2feat;

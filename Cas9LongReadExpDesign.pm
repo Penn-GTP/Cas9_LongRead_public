@@ -15,7 +15,8 @@ our %GLOBAL_OPTS = (
 	SCRIPT_DIR => 'scripts',
 	VEC_DIR => 'AAV_vec',
 	NGS_ALIGNER => 'AAV_vec',
-	FEATURE_TAG => 'label'
+	FEATURE_TAG => 'label',
+	MIN_COVER_RATIO => 0.9
 );
   
 # Constructor taking a filehandle or a filename

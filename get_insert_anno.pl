@@ -82,7 +82,9 @@ while(my $line = <IN>) {
 			($over_from, $over_to) = ($q_len - $over_to + 1, $q_len - $over_from + 1);
 		}
 
-		my $over_attr = $attr;
+# build overlap attr
+    my $cover_ratio = $over_len / ($end2 - $start2 + 1);
+		my $over_attr = "$attr;CoverRatio=$cover_ratio";
 
 # add overlap info
 		push(@{$insert2overlap{$name}}, [$name, $src, $type, $over_from, $over_to, $score, $over_strand, $frame, $over_attr]);
