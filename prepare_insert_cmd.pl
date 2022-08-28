@@ -29,7 +29,7 @@ my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 my $DEFAULT_TECH = 'ont';
 my $DEFAULT_MIN_INSERT = 20;
-my $DEFAULT_MAX_DIST = 500;
+my $DEFAULT_MAX_DIST = 520;
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
