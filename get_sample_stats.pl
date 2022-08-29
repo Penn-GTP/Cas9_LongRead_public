@@ -11,8 +11,8 @@ my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
-target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_donor_basic target_insert_functional_donor_full
-off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_donor_basic off_insert_functional_donor_full);
+target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_basic_count target_insert_functional_full_count target_insert_functional_basic_clone target_insert_functional_full_clone
+off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_basic_count off_insert_functional_full_count off_insert_functional_basic_clone off_insert_functional_full_clone);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -23,8 +23,6 @@ my $SCRIPT_DIR = $design->get_global_opt('SCRIPT_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $FEATURE_TAG = $design->get_global_opt('FEATURE_TAG');
-my $MIN_COVER_RATIO = 0.9; # default value
-$MIN_COVER_RATIO = $design->get_global_opt('MIN_COVER_RATIO');
 
 # check required directories
 if(!(-e $BASE_DIR && -d $BASE_DIR)) {
@@ -198,46 +196,52 @@ foreach my $sample ($design->get_sample_names()) {
 		chomp $off_vec2_mapped;
 	}
 
-# get functional donor counts
-	my ($target_functional_donor_basic, $off_functional_donor_basic, $target_functional_donor_full, $off_functional_donor_full) = (0, 0, 0, 0);
+# get target insert functional counts
+	my ($target_functional_basic_count, $target_functional_full_count, $target_functional_basic_clone, $target_functional_full_clone) = (0, 0, 0, 0);
 	if($design->sample_opt($sample, 'donor_gb')) {
-		my @feat_basic = split(/\|/, $design->sample_opt($sample, 'functional_donor_feature_basic'));
-		my @feat_full = split(/\|/, $design->sample_opt($sample, 'functional_donor_feature_full'));
-    {
-		  open(GFF, "<", $design->get_sample_target_insert_donor_vec_anno($sample));
-			my %name2feat = get_anno_summ(\*GFF, $MIN_COVER_RATIO);
-			foreach my $feats (values %name2feat) {
-				my @feats_rev = reverse(@$feats);
-				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
-					$target_functional_donor_basic++;
-				}
-				if(is_sub_array($feats, \@feat_full) || is_sub_array(\@feats_rev, \@feat_full)) {
-					$target_functional_donor_full++;
-				}
+		my $in = $design->get_sample_target_insert_donor_vec_summ($sample);
+		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
+		<IN>; # ignore header
+		while(my $line = <IN>) {
+			chomp $line;
+			my ($insert_id, $anno_summ, $basic_clone, $full_clone) = split(/\t/, $line);
+			if($basic_clone > 0) {
+				$target_functional_basic_count++;
+				$target_functional_basic_clone += $basic_clone;
 			}
-			close(GFF);
-    }
+			if($full_clone > 0) {
+				$target_functional_full_count++;
+				$target_functional_full_clone += $full_clone;
+			}
+		}
+		close(IN);
+	}
 
-    {
-		  open(GFF, "<", $design->get_sample_off_insert_donor_vec_anno($sample));
-			my %name2feat = get_anno_summ(\*GFF, $MIN_COVER_RATIO);
-			foreach my $feats (values %name2feat) {
-				my @feats_rev = reverse(@$feats);
-				if(is_sub_array($feats, \@feat_basic) || is_sub_array(\@feats_rev, \@feat_basic)) {
-					$off_functional_donor_basic++;
-				}
-				if(is_sub_array($feats, \@feat_full) || is_sub_array(\@feats_rev, \@feat_full)) {
-					$off_functional_donor_full++;
-				}
+# get off insert functional counts
+	my ($off_functional_basic_count, $off_functional_full_count, $off_functional_basic_clone, $off_functional_full_clone) = (0, 0, 0, 0);
+	if($design->sample_opt($sample, 'donor_gb')) {
+		my $in = $design->get_sample_off_insert_donor_vec_summ($sample);
+		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
+		<IN>; # ignore header
+		while(my $line = <IN>) {
+			chomp $line;
+			my ($insert_id, $anno_summ, $basic_clone, $full_clone) = split(/\t/, $line);
+			if($basic_clone > 0) {
+				$off_functional_basic_count++;
+				$off_functional_basic_clone += $basic_clone;
 			}
-			close(GFF);
-    }
+			if($full_clone > 0) {
+				$off_functional_full_count++;
+				$off_functional_full_clone += $full_clone;
+			}
+		}
+		close(IN);
 	}
 
 # output
   print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
-	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_donor_basic\t$target_functional_donor_full\t",
-	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_donor_basic\t$off_functional_donor_full\n";
+	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_basic_count\t$target_functional_full_count\t$target_functional_basic_clone\t$target_functional_full_clone\t",
+	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_basic_count\t$off_functional_full_count\t$off_functional_basic_clone\t$off_functional_full_clone\n";
 }
 
 close(OUT);

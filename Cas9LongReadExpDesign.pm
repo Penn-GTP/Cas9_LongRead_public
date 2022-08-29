@@ -618,6 +618,18 @@ sub get_sample_insert_donor_vec_count {
 	return "$sample\_insert_donor_vec_feature_count.tsv";
 }
 
+# get per-sample target insert donor summ
+sub get_sample_target_insert_donor_vec_summ {
+	my ($self, $sample) = @_;
+	return "$sample\_target_insert_donor_vec_summ.tsv";
+}
+
+# get per-sample off insert donor summ
+sub get_sample_off_insert_donor_vec_summ {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_donor_vec_summ.tsv";
+}
+
 # get per-exp stats
 sub get_exp_stats_file {
 	my ($self, $exp_file) = @_;
