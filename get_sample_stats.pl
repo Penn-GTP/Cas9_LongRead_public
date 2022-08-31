@@ -11,8 +11,8 @@ my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
-target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_basic_count target_insert_functional_full_count target_insert_functional_basic_clone target_insert_functional_full_clone
-off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_basic_count off_insert_functional_full_count off_insert_functional_basic_clone off_insert_functional_full_clone);
+target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_basic_count target_insert_functional_full_count target_insert_functional_basic_clone target_insert_functional_full_clone target_insert_functional_basic_freq target_insert_functional_full_freq
+off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_basic_count off_insert_functional_full_count off_insert_functional_basic_clone off_insert_functional_full_clone off_insert_functional_basic_freq off_insert_functional_full_freq);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -198,6 +198,8 @@ foreach my $sample ($design->get_sample_names()) {
 
 # get target insert functional counts
 	my ($target_functional_basic_count, $target_functional_full_count, $target_functional_basic_clone, $target_functional_full_clone) = (0, 0, 0, 0);
+	my %target_basic_freq;
+	my %target_full_freq;
 	if($design->sample_opt($sample, 'donor_gb')) {
 		my $in = $design->get_sample_target_insert_donor_vec_summ($sample);
 		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
@@ -208,10 +210,12 @@ foreach my $sample ($design->get_sample_names()) {
 			if($basic_clone > 0) {
 				$target_functional_basic_count++;
 				$target_functional_basic_clone += $basic_clone;
+				$target_basic_freq{$basic_clone}++;
 			}
 			if($full_clone > 0) {
 				$target_functional_full_count++;
 				$target_functional_full_clone += $full_clone;
+				$target_full_freq{$full_clone}++;
 			}
 		}
 		close(IN);
@@ -219,6 +223,8 @@ foreach my $sample ($design->get_sample_names()) {
 
 # get off insert functional counts
 	my ($off_functional_basic_count, $off_functional_full_count, $off_functional_basic_clone, $off_functional_full_clone) = (0, 0, 0, 0);
+	my %off_basic_freq;
+	my %off_full_freq;
 	if($design->sample_opt($sample, 'donor_gb')) {
 		my $in = $design->get_sample_off_insert_donor_vec_summ($sample);
 		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
@@ -229,10 +235,12 @@ foreach my $sample ($design->get_sample_names()) {
 			if($basic_clone > 0) {
 				$off_functional_basic_count++;
 				$off_functional_basic_clone += $basic_clone;
+				$off_basic_freq{$basic_clone}++;
 			}
 			if($full_clone > 0) {
 				$off_functional_full_count++;
 				$off_functional_full_clone += $full_clone;
+				$off_full_freq{$full_clone}++;
 			}
 		}
 		close(IN);
@@ -240,58 +248,15 @@ foreach my $sample ($design->get_sample_names()) {
 
 # output
   print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
-	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_basic_count\t$target_functional_full_count\t$target_functional_basic_clone\t$target_functional_full_clone\t",
-	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_basic_count\t$off_functional_full_count\t$off_functional_basic_clone\t$off_functional_full_clone\n";
+	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_basic_count\t$target_functional_full_count\t$target_functional_basic_clone\t$target_functional_full_clone\t", get_freq_str(%target_basic_freq), "\t", get_freq_str(%target_full_freq), "\t",
+	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_basic_count\t$off_functional_full_count\t$off_functional_basic_clone\t$off_functional_full_clone\t",
+	get_freq_str(%off_basic_freq), "\t", get_freq_str(%off_full_freq), "\n";
 }
 
 close(OUT);
 
-# subroutine definitions
-sub get_anno_summ {
-	my $fh = shift;
-	my $min_ratio = shift;
-	my %name2feat;
-	while(my $line = <$fh>) {
-		chomp $line;
-		next if($line =~ /^#/);
-		my ($name, $src, $type, $start, $end, $score, $strand, $frame, $attrs) = split(/\t/, $line);
-		my ($label, $cover_ratio);
-    foreach my $attr (split(/;/, $attrs)) {
-			my ($tag, $val) = split(/=/, $attr);
-			if($tag eq $FEATURE_TAG) {
-				$label = $val;
-			}
-			elsif($tag eq 'CoverRatio') {
-				$cover_ratio = $val;
-			}
-		}
-		if($cover_ratio >= $min_ratio) {
-				push(@{$name2feat{$name}}, $label);
-		}
-	}
-	return %name2feat;
+sub get_freq_str {
+	return 'NA' if(!@_);
+	my %freq = @_;
+	return join(',', map { "$_:$freq{$_}" } sort {$a <=> $b} keys %freq);
 }
-
-sub is_sub_array {
-	my ($A, $B) = @_;
-	my $n = @$A;
-	my $m = @$B;
-	my ($i, $j) = (0, 0);
-	while($i < $n && $j < $m) {
-		if($A->[$i] eq $B->[$j]) {
-			$i++;
-			$j++;
-
-			if($j == $m) {
-				return 1;
-			}
-		}
-		else {
-			$i = $i - $j + 1;
-			$j = 0;
-		}
-	}
-
-	return 0;
-}
-
