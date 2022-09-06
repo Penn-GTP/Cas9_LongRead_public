@@ -48,7 +48,9 @@ while(my $line = <IN>) {
 			$cover_ratio = $val;
 		}
 	}
-	push(@{$name2feat_cover{$name}}, [$label, $cover_ratio]);
+	if(defined $label) {
+		push(@{$name2feat_cover{$name}}, [$label, $cover_ratio]);
+	}
 }
 
 # scan each insert and output
