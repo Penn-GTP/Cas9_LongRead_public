@@ -38,6 +38,8 @@ open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 
 # read in insert anno
 my %insert2overlap;
+my $insert_id = '';
+my @r2q_idx;
 
 while(my $line = <IN>) {
 	chomp $line;
@@ -54,21 +56,24 @@ while(my $line = <IN>) {
 		my ($q_len) = $name =~ /:(\d+)[IS]:/;
 
 # build target2query index, all coordinates are 0-based
-		my @r2q_idx = 0 x $t_len;
-		my $i = 0; # index on target
-		my $j = 0; # index on query
-		while($cigar =~ /(\d+)([MIDNSHPX=])/g) {
-			my ($len, $op) = ($1, $2);
-			for(my $k = 0; $k < $len; $k++) {
-				$r2q_idx[$i] = $j;
-				if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'D' || $op eq 'N') {
-					$i++;
-				}
-				if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'I' || $op eq 'S') {
-					$j++;
+		if($insert_id ne "$chr:$start:$end:$name:$cigar") {
+			@r2q_idx = 0 x $t_len;
+			my $i = 0;
+			my $j = 0;
+			while($cigar =~ /(\d+)([MIDNSHPX=])/g) {
+				my ($len, $op) = ($1, $2);
+				for(my $k = 0; $k < $len; $k++) {
+					$r2q_idx[$i] = $j;
+					if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'D' || $op eq 'N') {
+						$i++;
+					}
+					if($op eq 'M' || $op eq '=' || $op eq 'X' || $op eq 'I' || $op eq 'S') {
+						$j++;
+					}
 				}
 			}
 		}
+		$insert_id = "$chr:$start:$end:$name:$cigar";
 
 		my $over_start = $start > $start2 ? $start : $start2;
 		my $over_end = $end < $end2 ? $end : $end2;
