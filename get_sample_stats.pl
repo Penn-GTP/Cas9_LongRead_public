@@ -176,7 +176,7 @@ foreach my $sample ($design->get_sample_names()) {
 
 # get ref2 mapped
 	my ($target_ref2_mapped, $off_ref2_mapped) = qw(NA NA);
-	if($design->get_sample_opts($sample, 'ref2_db')) {
+	if($design->sample_opt($sample, 'ref2_db')) {
 		my $in_target = $design->get_sample_target_insert_ref2_sorted_file($sample);
 		my $in_off = $design->get_sample_off_insert_ref2_sorted_file($sample);
 		$target_ref2_mapped = `$samtools view $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
@@ -187,7 +187,7 @@ foreach my $sample ($design->get_sample_names()) {
 
 # get vec2 mapped
 	my ($target_vec2_mapped, $off_vec2_mapped) = qw(NA NA);
-	if($design->get_sample_opts($sample, 'vec2_db')) {
+	if($design->sample_opt($sample, 'vec2_db')) {
 		my $in_target = $design->get_sample_target_insert_vec2_sorted_file($sample);
 		my $in_off = $design->get_sample_off_insert_vec2_sorted_file($sample);
 		$target_vec2_mapped = `$samtools view $BASE_DIR/$in_target | cut -f1 | sort -u | wc -l`;
