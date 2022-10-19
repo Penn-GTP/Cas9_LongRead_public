@@ -16,7 +16,9 @@ our %GLOBAL_OPTS = (
 	VEC_DIR => 'AAV_vec',
 	NGS_ALIGNER => 'AAV_vec',
 	FEATURE_TAG => 'label',
-	MIN_COVER_RATIO => 0.9
+	MIN_COVER_RATIO => 0.9,
+	ITR_KEY => 'ITR',
+	ITR_MIN_RATIO => 0.25
 );
   
 # Constructor taking a filehandle or a filename

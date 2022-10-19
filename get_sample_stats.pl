@@ -12,6 +12,7 @@ my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 my $samtools = 'samtools';
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
 target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_basic_count target_insert_functional_full_count target_insert_functional_basic_clone target_insert_functional_full_clone target_insert_functional_basic_freq target_insert_functional_full_freq
+target_insert_type_freq target_insert_functional_basic_type_freq target_insert_functional_full_type_freq
 off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_basic_count off_insert_functional_full_count off_insert_functional_basic_clone off_insert_functional_full_clone off_insert_functional_basic_freq off_insert_functional_full_freq);
 
 my $infile = shift or die $usage;
@@ -200,22 +201,28 @@ foreach my $sample ($design->get_sample_names()) {
 	my ($target_functional_basic_count, $target_functional_full_count, $target_functional_basic_clone, $target_functional_full_clone) = (0, 0, 0, 0);
 	my %target_basic_freq;
 	my %target_full_freq;
+	my %target_type_freq;
+	my %target_basic_type_freq;
+	my %target_full_type_freq;
 	if($design->sample_opt($sample, 'donor_gb')) {
 		my $in = $design->get_sample_target_insert_donor_vec_summ($sample);
 		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
 		<IN>; # ignore header
 		while(my $line = <IN>) {
 			chomp $line;
-			my ($insert_id, $anno_summ, $basic_clone, $full_clone) = split(/\t/, $line);
+			my ($insert_id, $anno_summ, $basic_clone, $full_clone, $type) = split(/\t/, $line);
+			$target_type_freq{$type}++;
 			if($basic_clone > 0) {
 				$target_functional_basic_count++;
 				$target_functional_basic_clone += $basic_clone;
 				$target_basic_freq{$basic_clone}++;
+				$target_basic_type_freq{$type}++;
 			}
 			if($full_clone > 0) {
 				$target_functional_full_count++;
 				$target_functional_full_clone += $full_clone;
 				$target_full_freq{$full_clone}++;
+				$target_full_type_freq{$type}++;
 			}
 		}
 		close(IN);
@@ -249,6 +256,7 @@ foreach my $sample ($design->get_sample_names()) {
 # output
   print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
 	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_basic_count\t$target_functional_full_count\t$target_functional_basic_clone\t$target_functional_full_clone\t", get_freq_str(%target_basic_freq), "\t", get_freq_str(%target_full_freq), "\t",
+	get_freq_str2(%target_type_freq), "\t", get_freq_str2(%target_basic_type_freq), "\t", get_freq_str2(%target_full_type_freq), "\t",
 	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_basic_count\t$off_functional_full_count\t$off_functional_basic_clone\t$off_functional_full_clone\t",
 	get_freq_str(%off_basic_freq), "\t", get_freq_str(%off_full_freq), "\n";
 }
@@ -259,4 +267,10 @@ sub get_freq_str {
 	return 'NA' if(!@_);
 	my %freq = @_;
 	return join(',', map { "$_:$freq{$_}" } sort {$a <=> $b} keys %freq);
+}
+
+sub get_freq_str2 {
+	return 'NA' if(!@_);
+	my %freq = @_;
+	return join(',', map { "$_:$freq{$_}" } sort keys %freq);
 }

@@ -26,8 +26,9 @@ my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 my $FEATURE_TAG = $design->get_global_opt('FEATURE_TAG');
-my $MIN_COVER_RATIO = 0.9; # default value
-$MIN_COVER_RATIO = $design->get_global_opt('MIN_COVER_RATIO');
+my $MIN_COVER_RATIO = defined $design->get_global_opt('MIN_COVER_RATIO') ? $design->get_global_opt('MIN_COVER_RATIO') : 0.9;
+my $ITR_KEY = defined $design->get_global_opt('ITR_KEY') ? $design->get_global_opt('ITR_KEY') : 0.9;
+my $ITR_MIN_RATIO = $design->get_global_opt('ITR_MIN_RATIO') > 0 ? $design->get_global_opt('ITR_MIN_RATIO') : 0.25;
 
 my $insert_size_script = 'show_insert_size_distrib.R';
 my $sample_stats_script = 'get_sample_stats.pl';
@@ -454,7 +455,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $basic_opt = $design->sample_opt($sample, 'functional_donor_feature_basic');
 		my $full_opt = $design->sample_opt($sample, 'functional_donor_feature_full');
 
-		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG);
+		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ITR-key $ITR_KEY --ITR-min-ratio $ITR_MIN_RATIO);
 
 		if(!(-e "$BASE_DIR/$out")) {
 			print OUT "$cmd\n";
