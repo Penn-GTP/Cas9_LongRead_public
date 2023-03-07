@@ -473,7 +473,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my $basic_opt = $design->sample_opt($sample, 'functional_donor_feature_basic');
 		my $full_opt = $design->sample_opt($sample, 'functional_donor_feature_full');
 
-		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG);
+		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ITR-key $ITR_KEY --ITR-min-ratio $ITR_MIN_RATIO);
 
 		if(!(-e "$BASE_DIR/$out")) {
 			print OUT "$cmd\n";
