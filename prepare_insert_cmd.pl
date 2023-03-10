@@ -113,7 +113,7 @@ foreach my $sample ($design->get_sample_names()) {
 
 # prepare extract target and index cmd
 	{
-		my $in = $design->get_sample_target_insert_pos_sorted($sample);
+		my $in = $design->get_sample_target_insert_pos_merged($sample);
 		my $read = $design->sample_opt($sample, 'read_fastq');
 		my $fq_out = $design->get_sample_target_insert_fastq($sample);
 		my $fa_out = $design->get_sample_target_insert_fasta($sample);
@@ -134,7 +134,7 @@ foreach my $sample ($design->get_sample_names()) {
 
 # prepare extract off and index cmd
 	{
-		my $in = $design->get_sample_off_insert_pos_sorted($sample);
+		my $in = $design->get_sample_off_insert_pos_merged($sample);
 		my $read = $design->sample_opt($sample, 'read_fastq');
 		my $fq_out = $design->get_sample_off_insert_fastq($sample);
 		my $fa_out = $design->get_sample_off_insert_fasta($sample);

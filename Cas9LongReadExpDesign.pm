@@ -17,8 +17,8 @@ our %GLOBAL_OPTS = (
 	NGS_ALIGNER => 'AAV_vec',
 	FEATURE_TAG => 'label',
 	MIN_COVER_RATIO => 0.9,
-	ITR_KEY => 'ITR',
-	ITR_MIN_RATIO => 0.25
+	ARM_KEY => '(?i:ARM)|shHDR',
+ 	ARM_MIN_RATIO => 0.1
 );
   
 # Constructor taking a filehandle or a filename
@@ -494,46 +494,16 @@ sub get_sample_target_insert_size_distrib {
 	return "$sample\_target_insert_size_distrib.pdf";
 }
 
-# get per-sample target insert vec sorted bed
-sub get_sample_target_insert_vec_sorted_bed {
-	my ($self, $sample) = @_;
-	return "$sample\_target_insert_vec_map_filtered_sorted.bed";
-}
-
-# get per-sample target insert ref2 sorted bed
-sub get_sample_target_insert_ref2_sorted_bed {
-	my ($self, $sample) = @_;
-	return "$sample\_target_insert_ref2_map_filtered_sorted.bed";
-}
-
-# get per-sample target insert vec2 sorted bed
-sub get_sample_target_insert_vec2_sorted_bed {
-	my ($self, $sample) = @_;
-	return "$sample\_target_insert_vec2_map_filtered_sorted.bed";
-}
-
 # get per-sample off insert size distribution figure
 sub get_sample_off_insert_size_distrib {
 	my ($self, $sample) = @_;
 	return "$sample\_off_insert_size_distrib.pdf";
 }
 
-# get per-sample off insert vec sorted bed
-sub get_sample_off_insert_vec_sorted_bed {
+# get per-sample target insert vec anno
+sub get_sample_target_insert_vec_anno {
 	my ($self, $sample) = @_;
-	return "$sample\_off_insert_vec_map_filtered_sorted.bed";
-}
-
-# get per-sample off insert ref2 sorted bed
-sub get_sample_off_insert_ref2_sorted_bed {
-	my ($self, $sample) = @_;
-	return "$sample\_off_insert_ref2_map_filtered_sorted.bed";
-}
-
-# get per-sample off insert vec2 sorted bed
-sub get_sample_off_insert_vec2_sorted_bed {
-	my ($self, $sample) = @_;
-	return "$sample\_off_insert_vec2_map_filtered_sorted.bed";
+	return "$sample\_target_insert_vec_anno.gff3";
 }
 
 # get per-sample target insert nuclease_vec anno
@@ -570,6 +540,12 @@ sub get_sample_target_insert_ref2_anno {
 sub get_sample_target_insert_vec2_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_target_insert_vec2_anno.gff3";
+}
+
+# get per-sample off insert vec anno
+sub get_sample_off_insert_vec_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_off_insert_vec_anno.gff3";
 }
 
 # get per-sample off insert nuclease_vec anno
@@ -620,16 +596,16 @@ sub get_sample_insert_donor_vec_count {
 	return "$sample\_insert_donor_vec_feature_count.tsv";
 }
 
-# get per-sample target insert donor summ
-sub get_sample_target_insert_donor_vec_summ {
+# get per-sample target insert vec summ
+sub get_sample_target_insert_vec_summ {
 	my ($self, $sample) = @_;
-	return "$sample\_target_insert_donor_vec_summ.tsv";
+	return "$sample\_target_insert_vec_summ.tsv";
 }
 
-# get per-sample off insert donor summ
-sub get_sample_off_insert_donor_vec_summ {
+# get per-sample off insert vec summ
+sub get_sample_off_insert_vec_summ {
 	my ($self, $sample) = @_;
-	return "$sample\_off_insert_donor_vec_summ.tsv";
+	return "$sample\_off_insert_vec_summ.tsv";
 }
 
 # get per-exp stats

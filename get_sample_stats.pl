@@ -10,10 +10,15 @@ use Cas9LongReadExpDesign;
 my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
+my $comments = qq(Sample name\tTotal reads\tHost-mapped reads\tHost-mapped Cas9 enriched region mapped reads\tHost-mapped ARCUS target mapped reads\t) .
+qq(On-target inserts\tOn-target complete inserts\tOn-target incomplete inserts\tOn-target inserts vector mapped\tOn-target inserts nuclease-vector mapped\tOn-target inserts donor-vector mapped\tOn-target inserts trans-plasmid mapped\tOn-target inserts helper-plasmid mapped\tOn-target inserts host2 mapped\tOn-target inserts vector2 mapped\tOn-target inserts functional count\tOn-target inserts functional clone\tOn-target inserts functional clone frequency\tOn-target inserts type frequency\tOn-target inserts functional type frequency\t) .
+qq(Of-target inserts\tOff-target complete inserts\tOff-target incomplete inserts\tOff-target inserts vector mapped\tOff-target inserts nuclease-vector mapped\tOff-target inserts donor-vector mapped\tOff-target inserts trans-plasmid mapped\tOff-target inserts helper-plasmid mapped\tOff-target inserts host2 mapped\tOff-target inserts vector2 mapped\tOff-target inserts functional count\tOff-target inserts functional clone\tOff-target inserts functional clone frequency\tOff-target inserts type frequency\tOff-target inserts functional type frequency);
+
 my @headers = qw(sample_name total_read ref_mapped ref_enrich ref_target
-target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_basic_count target_insert_functional_full_count target_insert_functional_basic_clone target_insert_functional_full_clone target_insert_functional_basic_freq target_insert_functional_full_freq
-target_insert_type_freq target_insert_functional_basic_type_freq target_insert_functional_full_type_freq
-off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_basic_count off_insert_functional_full_count off_insert_functional_basic_clone off_insert_functional_full_clone off_insert_functional_basic_freq off_insert_functional_full_freq);
+target_insert target_insert_complete target_insert_incomplete target_insert_vec_mapped target_insert_nuclease_mapped target_insert_donor_mapped target_insert_trans_mapped target_insert_helper_mapped target_insert_ref2_mapped target_insert_vec2_mapped target_insert_functional_count target_insert_functional_clone target_insert_functional_freq
+target_insert_type_freq target_insert_functional_type_freq
+off_insert off_insert_complete off_insert_incomplete off_insert_vec_mapped off_insert_nuclease_mapped off_insert_donor_mapped off_insert_trans_mapped off_insert_helper_mapped off_insert_ref2_mapped off_insert_vec2_mapped off_insert_functional_count off_insert_functional_clone off_insert_functional_freq
+off_insert_type_freq off_insert_functional_type_freq);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -48,6 +53,7 @@ if(!(-e $WORK_DIR)) {
 
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 # write header
+print OUT "# $comments\n";
 print OUT join("\t", @headers), "\n";
 
 foreach my $sample ($design->get_sample_names()) {
@@ -198,56 +204,46 @@ foreach my $sample ($design->get_sample_names()) {
 	}
 
 # get target insert functional counts
-	my ($target_functional_basic_count, $target_functional_full_count, $target_functional_basic_clone, $target_functional_full_clone) = (0, 0, 0, 0);
-	my %target_basic_freq;
-	my %target_full_freq;
+	my ($target_functional_count, $target_functional_clone) = (0, 0);
+	my %target_freq;
 	my %target_type_freq;
-	my %target_basic_type_freq;
-	my %target_full_type_freq;
+	my %target_functional_type_freq;
 	if($design->sample_opt($sample, 'donor_gb')) {
-		my $in = $design->get_sample_target_insert_donor_vec_summ($sample);
+		my $in = $design->get_sample_target_insert_vec_summ($sample);
 		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
 		<IN>; # ignore header
 		while(my $line = <IN>) {
 			chomp $line;
-			my ($insert_id, $anno_summ, $basic_clone, $full_clone, $type) = split(/\t/, $line);
+			my ($insert_id, $anno_summ, $func_clone, $type) = split(/\t/, $line);
 			$target_type_freq{$type}++;
-			if($basic_clone > 0) {
-				$target_functional_basic_count++;
-				$target_functional_basic_clone += $basic_clone;
-				$target_basic_freq{$basic_clone}++;
-				$target_basic_type_freq{$type}++;
-			}
-			if($full_clone > 0) {
-				$target_functional_full_count++;
-				$target_functional_full_clone += $full_clone;
-				$target_full_freq{$full_clone}++;
-				$target_full_type_freq{$type}++;
+			if($func_clone > 0) {
+				$target_functional_count++;
+				$target_functional_clone += $func_clone;
+				$target_freq{$func_clone}++;
+				$target_functional_type_freq{$type}++;
 			}
 		}
 		close(IN);
 	}
 
 # get off insert functional counts
-	my ($off_functional_basic_count, $off_functional_full_count, $off_functional_basic_clone, $off_functional_full_clone) = (0, 0, 0, 0);
-	my %off_basic_freq;
-	my %off_full_freq;
+	my ($off_functional_count, $off_functional_clone) = (0, 0);
+	my %off_freq;
+	my %off_type_freq;
+	my %off_functional_type_freq;
 	if($design->sample_opt($sample, 'donor_gb')) {
-		my $in = $design->get_sample_off_insert_donor_vec_summ($sample);
+		my $in = $design->get_sample_off_insert_vec_summ($sample);
 		open(IN, "<$BASE_DIR/$in") || die "Unable to open $BASE_DIR/$in: $!";
 		<IN>; # ignore header
 		while(my $line = <IN>) {
 			chomp $line;
-			my ($insert_id, $anno_summ, $basic_clone, $full_clone) = split(/\t/, $line);
-			if($basic_clone > 0) {
-				$off_functional_basic_count++;
-				$off_functional_basic_clone += $basic_clone;
-				$off_basic_freq{$basic_clone}++;
-			}
-			if($full_clone > 0) {
-				$off_functional_full_count++;
-				$off_functional_full_clone += $full_clone;
-				$off_full_freq{$full_clone}++;
+			my ($insert_id, $anno_summ, $func_clone, $type) = split(/\t/, $line);
+			$off_type_freq{$type}++;
+			if($func_clone > 0) {
+				$off_functional_count++;
+				$off_functional_clone += $func_clone;
+				$off_freq{$func_clone}++;
+				$off_functional_type_freq{$type}++;
 			}
 		}
 		close(IN);
@@ -255,10 +251,8 @@ foreach my $sample ($design->get_sample_names()) {
 
 # output
   print OUT "$sample\t$total_read\t$ref_mapped\t$ref_enrich\t$ref_target\t",
-	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_basic_count\t$target_functional_full_count\t$target_functional_basic_clone\t$target_functional_full_clone\t", get_freq_str(%target_basic_freq), "\t", get_freq_str(%target_full_freq), "\t",
-	get_freq_str2(%target_type_freq), "\t", get_freq_str2(%target_basic_type_freq), "\t", get_freq_str2(%target_full_type_freq), "\t",
-	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_basic_count\t$off_functional_full_count\t$off_functional_basic_clone\t$off_functional_full_clone\t",
-	get_freq_str(%off_basic_freq), "\t", get_freq_str(%off_full_freq), "\n";
+	"$target_insert\t$target_complete\t$target_incomplete\t$target_vec_mapped\t$target_nuclease_mapped\t$target_donor_mapped\t$target_trans_mapped\t$target_helper_mapped\t$target_ref2_mapped\t$target_vec2_mapped\t$target_functional_count\t$target_functional_clone\t", get_freq_str(%target_freq), "\t", get_freq_str2(%target_type_freq), "\t", get_freq_str2(%target_functional_type_freq), "\t",
+	"$off_insert\t$off_complete\t$off_incomplete\t$off_vec_mapped\t$off_nuclease_mapped\t$off_donor_mapped\t$off_trans_mapped\t$off_helper_mapped\t$off_ref2_mapped\t$off_vec2_mapped\t$off_functional_count\t$off_functional_clone\t", get_freq_str(%off_freq), "\t", get_freq_str2(%off_type_freq), "\t", get_freq_str2(%off_functional_type_freq), "\n";
 }
 
 close(OUT);

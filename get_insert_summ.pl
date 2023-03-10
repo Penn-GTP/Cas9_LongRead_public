@@ -7,36 +7,33 @@ use Getopt::Long;
 
 my $min_ratio = 0.9;
 my $feat_tag = 'label';
-my $ITR_key = 'ITR';
-my $ITR_min_ratio = 0.25;
+my $ARM_key = "(?i:ARM)|shHDR";
+my $ARM_min_ratio = 0.1;
 
-my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE <--feat-basic STR> <--feat-full STR> [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ITR-key $ITR_key] [--ITR-min-ratio $ITR_min_ratio]";
+my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE <--func-feat STR> [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ARM-key $ARM_key] [--ARM-min-ratio $ARM_min_ratio]";
 
 # get opts
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
 
-my $feat_basic;
-my $feat_full;
+my $func_feat;
 
 GetOptions(
-"feat-basic=s" => \$feat_basic,
-"feat-full=s" => \$feat_full,
+"func-feat=s" => \$func_feat,
 "min-ratio=f" => \$min_ratio,
 "feat-tag=s" => \$feat_tag,
-"ITR-key=s" => \$ITR_key,
-"ITR-min-ratio=f" => \$ITR_min_ratio)
+"ARM-key=s" => \$ARM_key,
+"ARM-min-ratio=f" => \$ARM_min_ratio)
 or die "Error in command line arguments, usage: $usage";
 
-defined($feat_basic) && defined($feat_full) && $min_ratio > 0 && $ITR_min_ratio > 0 || die $usage;
+defined($func_feat && $min_ratio > 0 && $ARM_min_ratio > 0) || die $usage;
 
 # open files
 open(IN, "<$infile") || die "Unable to open $infile: $!";
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 
-my @feat_basic = split(/\|/, $feat_basic);
-my @feat_full = split(/\|/, $feat_full);
-$ITR_key = qr/$ITR_key/;
+my @func_feat = split(/\|/, $func_feat);
+$ARM_key = qr/$ARM_key/;
 
 # read in GFF annotation
 my %name2feat_cover;
@@ -61,10 +58,10 @@ while(my $line = <IN>) {
 
 # scan each insert and output
 # print OUT "#options invoked: --feat-basic=$feat_basic;--feat-full=$feat_full;--min-ratio=$min_ratio\n";
-print OUT "insert_id\tfeature_cover_summ\tdonor_vec_basic_clone\tdonor_vec_full_clone\tinsert_type\n";
+print OUT "rname\tfeature_cover_summ\tfunctional_clone\tinsert_type\n";
 
-foreach my $insert_id (sort keys %name2feat_cover) {
-	my @all_feats = @{$name2feat_cover{$insert_id}};
+foreach my $rname (sort keys %name2feat_cover) {
+	my @all_feats = @{$name2feat_cover{$rname}};
   my $cover_summ = join('|', map { join(':', @$_) } @all_feats);
   # filter feature with good cover-ratio
   my @feat_fwd;
@@ -75,16 +72,12 @@ foreach my $insert_id (sort keys %name2feat_cover) {
   }
 	my @feat_rev = reverse(@feat_fwd);
 # count feature fwd
-  my $basic_clone = count_sub_array(\@feat_fwd, \@feat_basic);
-  my $full_clone = count_sub_array(\@feat_fwd, \@feat_full);
-  if(@feat_basic > 1) { # also count feature rev
-    $basic_clone += count_sub_array(\@feat_rev, \@feat_basic);
+  my $func_clone = count_sub_array(\@feat_fwd, \@func_feat);
+  if(@func_feat > 1) { # also count feature rev
+    $func_clone += count_sub_array(\@feat_rev, \@func_feat);
   }
-  if(@feat_full > 1) { # also count feature rev
-    $full_clone += count_sub_array(\@feat_rev, \@feat_full);
-  }
-	my $insert_type = ends_with_ITR($ITR_key, $ITR_min_ratio, @all_feats) ? 'NHEJ' : !contains_ITR($ITR_key, @all_feats) ? 'HDR' : 'UNK';
-	print OUT "$insert_id\t$cover_summ\t$basic_clone\t$full_clone\t$insert_type\n";
+  my $insert_type = ends_with_ARM($ARM_key, $ARM_min_ratio, @all_feats) ? 'HDR' : 'NHEJ';
+	print OUT "$rname\t$cover_summ\t$func_clone\t$insert_type\n";
 }
 
 close(IN);
@@ -116,12 +109,12 @@ sub count_sub_array {
   return $clone;
 }
 
-sub ends_with_ITR {
-	my ($ITR_key, $ITR_min_ratio, @all_feats) = @_;
-	return @all_feats > 0 && ($all_feats[0][0] =~ /$ITR_key/ && $all_feats[0][1] >= $ITR_min_ratio || $all_feats[$#all_feats][0] =~ /$ITR_key/ && $all_feats[$#all_feats][1] >= $ITR_min_ratio);
+sub ends_with_ARM {
+  my ($ARM_key, $ARM_min_ratio, @all_feats) = @_;
+  return @all_feats > 0 && ($all_feats[0][0] =~ /$ARM_key/ && $all_feats[0][1] >= $ARM_min_ratio || $all_feats[$#all_feats][0] =~ /$ARM_key/ && $all_feats[$#all_feats][1] >= $ARM_min_ratio);
 }
 
-sub contains_ITR {
-  my ($ITR_key, @all_feats) = @_;
-	return scalar grep { $_->[0] =~ /$ITR_key/ } @all_feats;
+sub contains_ARM {
+  my ($ARM_key, @all_feats) = @_;
+  return scalar grep { $_->[0] =~ /$ARM_key/ } @all_feats;
 }

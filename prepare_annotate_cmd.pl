@@ -26,9 +26,9 @@ my $VEC_DIR = $design->get_global_opt('VEC_DIR');
 my $WORK_DIR = $design->get_global_opt('WORK_DIR');
 my $NGS_ALIGNER = $design->get_global_opt('NGS_ALIGNER');
 my $FEATURE_TAG = $design->get_global_opt('FEATURE_TAG');
-my $MIN_COVER_RATIO = defined $design->get_global_opt('MIN_COVER_RATIO') ? $design->get_global_opt('MIN_COVER_RATIO') : 0.9;
-my $ITR_KEY = defined $design->get_global_opt('ITR_KEY') ? $design->get_global_opt('ITR_KEY') : 0.9;
-my $ITR_MIN_RATIO = $design->get_global_opt('ITR_MIN_RATIO') > 0 ? $design->get_global_opt('ITR_MIN_RATIO') : 0.25;
+my $MIN_COVER_RATIO = $design->get_global_opt('MIN_COVER_RATIO');
+my $ARM_KEY = $design->get_global_opt('ARM_KEY');
+my $ARM_MIN_RATIO = $design->get_global_opt('ARM_MIN_RATIO');
 
 my $insert_size_script = 'show_insert_size_distrib.R';
 my $sample_stats_script = 'get_sample_stats.pl';
@@ -66,338 +66,202 @@ print OUT "#!$sh_path\n";
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 
 foreach my $sample ($design->get_sample_names()) {
-# prepare show target insert size cmd
+# prepare show insert size cmd
   {
-		my $in = $design->get_sample_target_insert_info($sample);
-		my $out = $design->get_sample_target_insert_size_distrib($sample);
+		my $target_in = $design->get_sample_target_insert_info($sample);
+		my $off_in = $design->get_sample_off_insert_info($sample);
+		my $target_out = $design->get_sample_target_insert_size_distrib($sample);
+		my $off_out = $design->get_sample_off_insert_size_distrib($sample);
 		
-		my $cmd = "$SCRIPT_DIR/$insert_size_script $BASE_DIR/$in $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
+		my $cmd;
+		$cmd .= "\n$SCRIPT_DIR/$insert_size_script $BASE_DIR/$target_in $BASE_DIR/$target_out";
+		$cmd .= "\n$SCRIPT_DIR/$insert_size_script $BASE_DIR/$off_in $BASE_DIR/$off_out";
+
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare show off insert size cmd
-  {
-		my $in = $design->get_sample_off_insert_info($sample);
-		my $out = $design->get_sample_off_insert_size_distrib($sample);
-		
-		my $cmd = "$SCRIPT_DIR/$insert_size_script $BASE_DIR/$in $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format target insert vec cmd
+# prepare annotate insert vec map cmd
 	{
-		my $in = $design->get_sample_target_insert_vec_sorted_file($sample);
-		my $out = $design->get_sample_target_insert_vec_sorted_bed($sample);
+		my $gff = $design->get_sample_vec_anno($sample);
+
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+
+		my $target_out = $design->get_sample_target_insert_vec_anno($sample);
+		my $off_out = $design->get_sample_off_insert_vec_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
 		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
+		my $cmd;
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
+
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare format target insert ref2 cmd
-  if($design->sample_opt($sample, 'ref2_db')) {
-		my $in = $design->get_sample_target_insert_ref2_sorted_file($sample);
-		my $out = $design->get_sample_target_insert_ref2_sorted_bed($sample);
-		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format target insert vec2 cmd
-  if($design->sample_opt($sample, 'vec2_db')) {
-		my $in = $design->get_sample_target_insert_vec2_sorted_file($sample);
-		my $out = $design->get_sample_target_insert_vec2_sorted_bed($sample);
-		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format off insert vec cmd
-	{
-		my $in = $design->get_sample_off_insert_vec_sorted_file($sample);
-		my $out = $design->get_sample_off_insert_vec_sorted_bed($sample);
-		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format off insert ref2 cmd
-  if($design->sample_opt($sample, 'ref2_db')) {
-		my $in = $design->get_sample_off_insert_ref2_sorted_file($sample);
-		my $out = $design->get_sample_off_insert_ref2_sorted_bed($sample);
-		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare format off insert vec2 cmd
-  if($design->sample_opt($sample, 'vec2_db')) {
-		my $in = $design->get_sample_off_insert_vec2_sorted_file($sample);
-		my $out = $design->get_sample_off_insert_vec2_sorted_bed($sample);
-		
-		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar > $BASE_DIR/$out";
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate target insert nuclease map cmd
+# prepare annotate insert nuclease map cmd
   if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $gff = $design->get_sample_nuclease_vec_anno($sample);
-		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_nuclease_vec_anno($sample);
+		my $bed = $design->get_sample_nuclease_vec_region($sample);
+
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+
+		my $target_out = $design->get_sample_target_insert_nuclease_vec_anno($sample);
+		my $off_out = $design->get_sample_off_insert_nuclease_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$target_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$off_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare annotate target insert donor map cmd
+# prepare annotate insert donor map cmd
   if($design->sample_opt($sample, 'donor_gb')) {
 		my $gff = $design->get_sample_donor_vec_anno($sample);
-		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_donor_vec_anno($sample);
+		my $bed = $design->get_sample_donor_vec_region($sample);
+
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+
+		my $target_out = $design->get_sample_target_insert_donor_vec_anno($sample);
+		my $off_out = $design->get_sample_off_insert_donor_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$target_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$off_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare annotate target insert trans map cmd
+# prepare annotate insert trans map cmd
   if($design->sample_opt($sample, 'trans_gb')) {
 		my $gff = $design->get_sample_trans_vec_anno($sample);
-		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_trans_vec_anno($sample);
+		my $bed = $design->get_sample_trans_vec_region($sample);
+
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+
+		my $target_out = $design->get_sample_target_insert_trans_vec_anno($sample);
+		my $off_out = $design->get_sample_off_insert_trans_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$target_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$off_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare annotate target insert helper map cmd
+# prepare annotate insert helper map cmd
   if($design->sample_opt($sample, 'helper_gb')) {
 		my $gff = $design->get_sample_helper_vec_anno($sample);
-		my $in = $design->get_sample_target_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_helper_vec_anno($sample);
+		my $bed = $design->get_sample_helper_vec_region($sample);
+
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+
+		my $target_out = $design->get_sample_target_insert_helper_vec_anno($sample);
+		my $off_out = $design->get_sample_off_insert_helper_vec_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$target_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$samtools view -L $VEC_DIR/$bed -b $BASE_DIR/$off_in | $bedtools bamtobed -i - -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare annotate target insert ref2 map cmd
+# prepare annotate insert ref2 map cmd
   if($design->sample_opt($sample, 'ref2_db')) {
 		my $gff = $design->sample_opt($sample, 'ref2_gff');
-		my $in = $design->get_sample_target_insert_ref2_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_ref2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'ref2_anno_opts');
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
 
-		if(!(-e "$BASE_DIR/$out")) {
+		my $target_out = $design->get_sample_target_insert_ref2_anno($sample);
+		my $off_out = $design->get_sample_off_insert_ref2_anno($sample);
+		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
+
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
 
-# prepare annotate target insert vec2 map cmd
+# prepare annotate insert vec2 map cmd
   if($design->sample_opt($sample, 'vec2_db')) {
 		my $gff = $design->sample_opt($sample, 'vec2_gff');
-		my $in = $design->get_sample_target_insert_vec2_sorted_bed($sample);
-		my $out = $design->get_sample_target_insert_vec2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec2_anno_opts');
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
+		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
 
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert nuclease map cmd
-  if($design->sample_opt($sample, 'nuclease_gb')) {
-		my $gff = $design->get_sample_nuclease_vec_anno($sample);
-		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_nuclease_vec_anno($sample);
+		my $target_out = $design->get_sample_target_insert_vec2_anno($sample);
+		my $off_out = $design->get_sample_off_insert_vec2_anno($sample);
 		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		
+		my $cmd;
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
 
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert donor map cmd
-  if($design->sample_opt($sample, 'donor_gb')) {
-		my $gff = $design->get_sample_donor_vec_anno($sample);
-		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_donor_vec_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
-
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert trans map cmd
-  if($design->sample_opt($sample, 'trans_gb')) {
-		my $gff = $design->get_sample_trans_vec_anno($sample);
-		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_trans_vec_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
-
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert helper map cmd
-  if($design->sample_opt($sample, 'helper_gb')) {
-		my $gff = $design->get_sample_helper_vec_anno($sample);
-		my $in = $design->get_sample_off_insert_vec_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_helper_vec_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
-
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert ref2 map cmd
-  if($design->sample_opt($sample, 'ref2_db')) {
-		my $gff = $design->sample_opt($sample, 'ref2_gff');
-		my $in = $design->get_sample_off_insert_ref2_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_ref2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'ref2_anno_opts');
-
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare annotate off insert vec2 map cmd
-  if($design->sample_opt($sample, 'vec2_db')) {
-		my $gff = $design->sample_opt($sample, 'vec2_gff');
-		my $in = $design->get_sample_off_insert_vec2_sorted_bed($sample);
-		my $out = $design->get_sample_off_insert_vec2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec2_anno_opts');
-
-		my $cmd = "$SCRIPT_DIR/$insert_anno_script $gff $BASE_DIR/$in $BASE_DIR/$out $opts";
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
@@ -412,7 +276,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my @featTypes = get_uniq_feat_types(\*GFF);
 		close(GFF);
 		my $opts = $design->sample_opt($sample, 'nuclease_count_opts');
-
+		
 		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
 		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in_target $BASE_DIR/$in_off";
 
@@ -435,7 +299,7 @@ foreach my $sample ($design->get_sample_names()) {
 		my @featTypes = get_uniq_feat_types(\*GFF);
 		close(GFF);
 		my $opts = $design->sample_opt($sample, 'donor_count_opts');
-
+		
 		my $cmd = "$featureCounts -a $VEC_DIR/$gff -o $BASE_DIR/$out -L -M -O -f -t \""
 		. join(",", @featTypes) . "\" -T $NUM_PROC $opts $BASE_DIR/$in_target $BASE_DIR/$in_off";
 
@@ -448,38 +312,25 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
-# prepare target insert donor summ cmd
-  if($design->sample_opt($sample, 'donor_gb')) {
-		my $in = $design->get_sample_target_insert_donor_vec_anno($sample);
-		my $out = $design->get_sample_target_insert_donor_vec_summ($sample);
-		my $basic_opt = $design->sample_opt($sample, 'functional_donor_feature_basic');
-		my $full_opt = $design->sample_opt($sample, 'functional_donor_feature_full');
+# prepare insert summ cmd
+  {
+		my $target_in = $design->get_sample_target_insert_vec_anno($sample);
+		my $off_in = $design->get_sample_off_insert_vec_anno($sample);
 
-		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ITR-key $ITR_KEY --ITR-min-ratio $ITR_MIN_RATIO);
+		my $target_out = $design->get_sample_target_insert_vec_summ($sample);
+		my $off_out = $design->get_sample_off_insert_vec_summ($sample);
+    my $func_opt = $design->sample_opt($sample, 'functional_feature');
+		
+		my $cmd;
+		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$target_in $BASE_DIR/$target_out --func-feat \"$func_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
+		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$off_in $BASE_DIR/$off_out --func-feat \"$func_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
 
-		if(!(-e "$BASE_DIR/$out")) {
+		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
 		}
 		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-			print OUT "# $cmd\n";
-		}
-	}
-
-# prepare off insert donor anno summ cmd
-  if($design->sample_opt($sample, 'donor_gb')) {
-		my $in = $design->get_sample_off_insert_donor_vec_anno($sample);
-		my $out = $design->get_sample_off_insert_donor_vec_summ($sample);
-		my $basic_opt = $design->sample_opt($sample, 'functional_donor_feature_basic');
-		my $full_opt = $design->sample_opt($sample, 'functional_donor_feature_full');
-
-		my $cmd = qq($SCRIPT_DIR/$insert_summ_script $BASE_DIR/$in $BASE_DIR/$out --feat-basic "$basic_opt" --feat-full "$full_opt" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ITR-key $ITR_KEY --ITR-min-ratio $ITR_MIN_RATIO);
-
-		if(!(-e "$BASE_DIR/$out")) {
-			print OUT "$cmd\n";
-		}
-		else {
-			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print STDERR "Warning: $BASE_DIR/$target_out, $BASE_DIR/$off_out already exist, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
 			print OUT "# $cmd\n";
 		}
 	}
