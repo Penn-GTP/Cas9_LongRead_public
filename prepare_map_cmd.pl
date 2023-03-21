@@ -82,7 +82,7 @@ foreach my $sample ($design->get_sample_names()) {
     my $out = $design->get_sample_ref_map_filtered_file($sample);
 		my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
 
-    my $cmd = "$samtools view -q $min_mapQ -F 0x900 -b -o $WORK_DIR/$out $WORK_DIR/$in"; # filter for primary alignment only
+    my $cmd = "$samtools view -q $min_mapQ -F 0x4 -F 0x100 -b -o $WORK_DIR/$out $WORK_DIR/$in"; # no secondary alignments
 
     if(!-e "$WORK_DIR/$out") {
       print OUT "$cmd\n";
