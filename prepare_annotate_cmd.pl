@@ -266,6 +266,26 @@ foreach my $sample ($design->get_sample_names()) {
 		}
 	}
 
+# prepare annotate genomic ref map cmd
+	{
+		my $gff = $design->sample_opt($sample, 'ref_gff');
+
+		my $in = $design->get_sample_target_genomic_ref_sorted_file($sample);
+
+		my $out = $design->get_sample_target_genomic_ref_anno($sample);
+		my $opts = $design->sample_opt($sample, 'ref_anno_opts');
+		
+		my $cmd = "$bedtools bamtobed -i $BASE_DIR/$in -cigar | $SCRIPT_DIR/$insert_anno_script $gff - $BASE_DIR/$out $opts";
+
+		if(!(-e "$BASE_DIR/$out")) {
+			print OUT "$cmd\n";
+		}
+		else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			print OUT "# $cmd\n";
+		}
+	}
+
 # prepare count nuclease map cmd
   if($design->sample_opt($sample, 'nuclease_gb')) {
 		my $gff = $design->get_sample_nuclease_vec_anno($sample);

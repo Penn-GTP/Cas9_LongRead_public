@@ -13,7 +13,7 @@ my $display = 'Name';
 my $exc_types = join(",", @exc_types);
 my $options = qq([OPTIONS]
 OPTIONS:
-  --include-type [TYPE1[,TYPE2]]: include given types in the GFF file as the annotation source, multiple values allowed separated by comma or by given multiple times
+  --include-type [TYPE1[,TYPE2]]: include given types in the GFF file as the annotation source, multiple values allowed separated by comma or by given multiple times, override --exclude-types if set
   --exclude-type [TYPE3[,TYPE4]]: exclude given types in the GFF file as the annotation source, multiple values allowed separated by comma or by given multiple times; [default: $exc_types]
   --display [TAG]: use TAG as the displayName tag for better 3rd party tool (i.e. IGV) visulization; [default: $display]
   --genome-size FILE: genome size file of 2 columns, with 1st field chromosome names and 2nd field their sizes [default: null]);
@@ -58,7 +58,7 @@ while(my $line = <IN>) {
 	}
 	my ($chr, $start, $end, $name, $score, $strand, $cigar, $chr2, $src, $type, $start2, $end2, $score2, $strand2, $frame, $attr, $over_len) = @fields;
 	$start2--;
-	if((any { $type eq $_ } @inc_types) || (none { $type eq $_ } @exc_types) ) {
+	if((any { $type eq $_ } @inc_types) || (@inc_types == 0 && none { $type eq $_ } @exc_types) ) {
 		my $t_len = $end - $start;
 		my ($q_len) = get_qlen_by_cigar($cigar);
 

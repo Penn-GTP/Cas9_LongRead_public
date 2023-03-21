@@ -488,6 +488,18 @@ sub get_sample_off_insert_ref_sorted_file {
 	return "$sample\_off_insert_ref_map_sorted.bam";
 }
 
+# get per-sample target_genomic ref sorted file
+sub get_sample_target_genomic_ref_sorted_file {
+	my ($self, $sample) = @_;
+	return "$sample\_target_genomic_ref_map_sorted.bam";
+}
+
+# get per-sample target_genomic ref map seq
+sub get_sample_target_genomic_ref_map_seq {
+	my ($self, $sample) = @_;
+	return "$sample\_target_genomic_ref_map_seq.fasta";
+}
+
 # get per-sample target insert size distribution figure
 sub get_sample_target_insert_size_distrib {
 	my ($self, $sample) = @_;
@@ -582,6 +594,18 @@ sub get_sample_off_insert_ref2_anno {
 sub get_sample_off_insert_vec2_anno {
 	my ($self, $sample) = @_;
 	return "$sample\_off_insert_vec2_anno.gff3";
+}
+
+# get per-sample target genomic ref anno
+sub get_sample_target_genomic_ref_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_target_genomic_ref_anno.gff3";
+}
+
+# get per-sample target genomic ref anno
+sub get_sample_target_genomic_ref_anno {
+	my ($self, $sample) = @_;
+	return "$sample\_target_genomic_ref_anno.gff3";
 }
 
 # get per-sample insert nuclease_vec feature count

@@ -603,6 +603,44 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     }
   }
 
+# prepare target genomic ref map sorted and index
+  {
+    my $in = $design->get_sample_ref_map_target_sorted_file($sample);
+    my $list = $design->get_sample_target_insert_vec_rnames($sample);
+    my $out = $design->get_sample_target_genomic_ref_sorted_file($sample);
+		
+    my $cmd = "if [ -s $WORK_DIR/$list ]; then java -jar $SCRIPT_DIR/$picard FilterSamReads --FILTER excludeReadList -I $BASE_DIR/$in -O $BASE_DIR/$out --READ_LIST_FILE $WORK_DIR/$list;";
+		$cmd .= "\nelse $samtools view -h $BASE_DIR/$in -b -o $BASE_DIR/$out; fi;";
+		$cmd .= "\n$samtools index $BASE_DIR/$out";
+
+    if(!-e "$BASE_DIR/$out") {
+      print OUT "$cmd\n";
+    }
+    else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
+      print OUT "# $cmd\n";
+    }
+  }
+
+# prepare extract target genomic seq and index cmd
+  {
+    my $in = $design->get_sample_target_genomic_ref_sorted_file($sample);
+    my $out = $design->get_sample_target_genomic_ref_map_seq($sample);
+		
+    my $cmd = "$samtools view -F 0x900 $BASE_DIR/$in -b | $samtools fasta -0 $BASE_DIR/$out $BASE_DIR/$in";
+		$cmd .= "\n$samtools faidx $BASE_DIR/$out";
+
+    if(!-e "$BASE_DIR/$out") {
+      print OUT "$cmd\n";
+    }
+    else {
+			print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+			$cmd =~ s/\n/\n# /sg;
+      print OUT "# $cmd\n";
+    }
+  }
+
   print OUT "\n";
 }
 
