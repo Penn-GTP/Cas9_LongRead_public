@@ -76,8 +76,12 @@ foreach my $sample ($design->get_sample_names()) {
 		my $merged = $design->get_sample_target_insert_pos_merged($sample);
 		
 		my $cmd = "$SCRIPT_DIR/$target_pos_script -t $bed -i $BASE_DIR/$in -o $WORK_DIR/$out --min-insert $min_insert --max-dist $max_dist";
-		$cmd .= "\n$bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted";
-		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged";
+		$cmd .= "\nif [ -s $WORK_DIR/$out ];";
+		$cmd .= "\nthen $bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted;";
+		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged;";
+		$cmd .= "\nelse cp $WORK_DIR/$out $WORK_DIR/$sorted;";
+		$cmd .= "\ncp $WORK_DIR/$sorted $WORK_DIR/$merged;";
+		$cmd .= "\nfi";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
@@ -98,8 +102,12 @@ foreach my $sample ($design->get_sample_names()) {
 		my $merged = $design->get_sample_off_insert_pos_merged($sample);
 		
 		my $cmd = "$SCRIPT_DIR/$off_pos_script -t $bed -i $BASE_DIR/$in -o $WORK_DIR/$out --min-insert $min_insert --max-dist $max_dist";
-		$cmd .= "\n$bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted";
-		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged";
+		$cmd .= "\nif [ -s $WORK_DIR/$out ];";
+		$cmd .= "\nthen $bedtools sort -i $WORK_DIR/$out > $WORK_DIR/$sorted;";
+		$cmd .= "\n$bedtools merge -s -d $max_dist -i $WORK_DIR/$sorted -c 4,5,6 -o collapse,sum,distinct > $WORK_DIR/$merged;";
+		$cmd .= "\nelse cp $WORK_DIR/$out $WORK_DIR/$sorted;";
+		$cmd .= "\ncp $WORK_DIR/$sorted $WORK_DIR/$merged;";
+		$cmd .= "\nfi";
 
 		if(!(-e "$WORK_DIR/$out")) {
 			print OUT "$cmd\n";
