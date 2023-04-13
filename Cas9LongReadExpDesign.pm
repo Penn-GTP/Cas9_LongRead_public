@@ -602,12 +602,6 @@ sub get_sample_target_genomic_ref_anno {
 	return "$sample\_target_genomic_ref_anno.gff3";
 }
 
-# get per-sample target genomic ref anno
-sub get_sample_target_genomic_ref_anno {
-	my ($self, $sample) = @_;
-	return "$sample\_target_genomic_ref_anno.gff3";
-}
-
 # get per-sample insert nuclease_vec feature count
 sub get_sample_insert_nuclease_vec_count {
 	my ($self, $sample) = @_;
