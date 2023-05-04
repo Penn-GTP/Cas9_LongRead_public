@@ -227,11 +227,11 @@ foreach my $sample ($design->get_sample_names()) {
 
 		my $target_out = $design->get_sample_target_insert_ref2_anno($sample);
 		my $off_out = $design->get_sample_off_insert_ref2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		my $opts = $design->sample_opt($sample, 'ref2_anno_opts');
 		
 		my $cmd;
-		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
-		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $gff - $BASE_DIR/$off_out $opts";
 
 		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
@@ -252,11 +252,11 @@ foreach my $sample ($design->get_sample_names()) {
 
 		my $target_out = $design->get_sample_target_insert_vec2_anno($sample);
 		my $off_out = $design->get_sample_off_insert_vec2_anno($sample);
-		my $opts = $design->sample_opt($sample, 'vec_anno_opts');
+		my $opts = $design->sample_opt($sample, 'vec2_anno_opts');
 		
 		my $cmd;
-		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$target_out $opts";
-		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $VEC_DIR/$gff - $BASE_DIR/$off_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$target_in -cigar | $SCRIPT_DIR/$insert_anno_script $gff - $BASE_DIR/$target_out $opts";
+		$cmd .= "\n$bedtools bamtobed -i $BASE_DIR/$off_in -cigar | $SCRIPT_DIR/$insert_anno_script $gff - $BASE_DIR/$off_out $opts";
 
 		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";
@@ -361,15 +361,17 @@ foreach my $sample ($design->get_sample_names()) {
 }
 
 # prepare sample stat cmd
-my $out = $design->get_exp_stats_file($infile);
+{
+	my $out = $design->get_exp_stats_file($infile);
 
-my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
-if(!(-e "$BASE_DIR/$out")) {
-	print OUT "$cmd\n";
-}
-else {
-	print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
-	print OUT "# $cmd\n";
+	my $cmd = "$SCRIPT_DIR/$sample_stats_script $infile $BASE_DIR/$out";
+	if(!(-e "$BASE_DIR/$out")) {
+		print OUT "$cmd\n";
+	}
+	else {
+		print STDERR "Warning: $BASE_DIR/$out already exists, won't override\n";
+		print OUT "# $cmd\n";
+	}
 }
 
 close(OUT);

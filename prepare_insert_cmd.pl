@@ -638,7 +638,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     my $in = $design->get_sample_target_genomic_ref_sorted_file($sample);
     my $out = $design->get_sample_target_genomic_ref_map_seq($sample);
 		
-    my $cmd = "$samtools view -F 0x900 $BASE_DIR/$in -b | $samtools fasta -0 $BASE_DIR/$out $BASE_DIR/$in";
+    my $cmd = "$samtools view -F 0x900 $BASE_DIR/$in -b | $samtools fasta -0 $BASE_DIR/$out -";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
