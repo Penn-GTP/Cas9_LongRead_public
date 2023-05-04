@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare sh script building Cas9LongRead REF
-our $VERSION = v1.1.1;
+our $VERSION = 'v1.1.1';
 our $ENV_FILE = 'set_ref_env.sh';
 
 use strict;
