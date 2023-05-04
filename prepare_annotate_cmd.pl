@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for annotate insert based on vec and optionally rev2 and vec2 mapping
-our $VERSION = v1.1;
+our $VERSION = v1.1.1;
 our $ENV_FILE = 'set_annotate_env.sh';
 
 use strict;
@@ -15,6 +15,7 @@ my $insert_summ_script = 'get_insert_summ.pl';
 my $samtools = 'samtools';
 my $bedtools = 'bedtools';
 my $featureCounts = 'featureCounts';
+my $cmd = "$0 " . join(" ", @ARGV);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -62,6 +63,7 @@ if(!($NGS_ALIGNER eq 'minimap2')) {
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 # write header
 print OUT "#!$sh_path\n";
+print OUT qq(# CMD:"$cmd"\n# VER:$VERSION\n);
 # set env
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 

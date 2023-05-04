@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use File::Basename;
 
-our $VERSION = v1.1;
+our $VERSION = v1.1.1;
 # Author: Qi Zheng
 # Since: 02/01/2022
 

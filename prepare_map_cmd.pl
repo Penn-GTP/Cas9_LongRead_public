@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for mapping Cas9 LongReads to ref genome and extract inserts
-our $VERSION = v1.1;
+our $VERSION = v1.1.1;
 our $ENV_FILE = 'set_map_env.sh';
 
 use strict;
@@ -11,6 +11,7 @@ use Cas9LongReadExpDesign;
 my $usage = "Usage: perl $0 DESIGN-FILE BASH-OUTFILE";
 my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
+my $cmd = "$0 " . join(" ", @ARGV);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -53,6 +54,7 @@ if(!($NGS_ALIGNER eq 'minimap2')) {
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 # write header
 print OUT "#!$sh_path\n";
+print OUT qq(# CMD:"$cmd"\n# VER:$VERSION\n);
 # set env
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 

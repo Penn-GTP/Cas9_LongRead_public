@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for extract target insert read segments and map them to vector and auxilary ref2 and vec2 genomes
-our $VERSION = v1.1;
+our $VERSION = v1.1.1;
 our $ENV_FILE = 'set_insert_env.sh';
 
 use strict;
@@ -17,6 +17,7 @@ my $filter_fasta_script = 'filter_fasta_file.pl';
 my $samtools = 'samtools';
 my $bedtools = 'bedtools';
 my $picard = 'picard.jar';
+my $cmd = "$0 " . join(" ", @ARGV);
 
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
@@ -60,6 +61,7 @@ if(!($NGS_ALIGNER eq 'minimap2')) {
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 # write header
 print OUT "#!$sh_path\n";
+print OUT qq(# CMD:"$cmd"\n# VER:$VERSION\n);
 # set env
 print OUT "source $SCRIPT_DIR/$ENV_FILE\n\n";
 

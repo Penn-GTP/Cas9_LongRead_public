@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for generating per-sample processing stats
-our $VERSION = v1.1;
+our $VERSION = v1.1.1;
 
 use strict;
 use warnings;
@@ -10,6 +10,7 @@ use Cas9LongReadExpDesign;
 my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
 #my $sh_path = '/bin/bash';
 my $samtools = 'samtools';
+my $cmd = "$0 " . join(" ", @ARGV);
 my $comments = qq(Sample name\tTotal reads\tHost-mapped reads\tHost-mapped Cas9 enriched region mapped reads\tHost-mapped ARCUS target mapped reads\t) .
 qq(On-target inserts\tOn-target complete inserts\tOn-target incomplete inserts\tOn-target inserts vector mapped\tOn-target inserts nuclease-vector mapped\tOn-target inserts donor-vector mapped\tOn-target inserts trans-plasmid mapped\tOn-target inserts helper-plasmid mapped\tOn-target inserts host2 mapped\tOn-target inserts vector2 mapped\tOn-target inserts functional count\tOn-target inserts functional clone\tOn-target inserts functional clone frequency\tOn-target inserts type frequency\tOn-target inserts functional type frequency\t) .
 qq(Of-target inserts\tOff-target complete inserts\tOff-target incomplete inserts\tOff-target inserts vector mapped\tOff-target inserts nuclease-vector mapped\tOff-target inserts donor-vector mapped\tOff-target inserts trans-plasmid mapped\tOff-target inserts helper-plasmid mapped\tOff-target inserts host2 mapped\tOff-target inserts vector2 mapped\tOff-target inserts functional count\tOff-target inserts functional clone\tOff-target inserts functional clone frequency\tOff-target inserts type frequency\tOff-target inserts functional type frequency);
@@ -53,6 +54,7 @@ if(!(-e $WORK_DIR)) {
 
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 # write header
+print OUT qq(# CMD:"$cmd"\n# VER:$VERSION\n);
 print OUT "# $comments\n";
 print OUT join("\t", @headers), "\n";
 
