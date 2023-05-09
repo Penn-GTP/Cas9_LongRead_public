@@ -7,6 +7,5 @@ module load java/openjdk-1.8.0 # java for running picard
 # set envs
 PATH=$PATH:/project/gtplab/apps/bin # gtplab apps
 PATH=$PATH:/project/gtplab/apps/minimap2 # minimap2
-PATH=$PATH:/project/gtplab/apps/perl/useful_scripts 
 
 export PATH

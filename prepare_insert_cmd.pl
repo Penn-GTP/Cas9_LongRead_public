@@ -542,7 +542,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     my $in = $design->get_sample_target_insert_fasta($sample);
     my $list = $design->get_sample_target_insert_vec_inames($sample);
     my $out = $design->get_sample_target_insert_vec_fasta($sample);
-    my $cmd = "$filter_fasta_script -i $BASE_DIR/$in -l $WORK_DIR/$list -o $BASE_DIR/$out";
+    my $cmd = "$SCRIPT_DIR/$filter_fasta_script -i $BASE_DIR/$in -l $WORK_DIR/$list -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
@@ -560,7 +560,7 @@ my $min_mapQ = $design->sample_opt($sample, 'min_mapQ');
     my $in = $design->get_sample_off_insert_fasta($sample);
     my $list = $design->get_sample_off_insert_vec_inames($sample);
     my $out = $design->get_sample_off_insert_vec_fasta($sample);
-    my $cmd = "$filter_fasta_script -i $BASE_DIR/$in -l $WORK_DIR/$list -o $BASE_DIR/$out";
+    my $cmd = "$SCRIPT_DIR/$filter_fasta_script -i $BASE_DIR/$in -l $WORK_DIR/$list -o $BASE_DIR/$out";
 		$cmd .= "\n$samtools faidx $BASE_DIR/$out";
 
     if(!-e "$BASE_DIR/$out") {
