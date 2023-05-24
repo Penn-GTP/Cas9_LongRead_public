@@ -222,8 +222,8 @@ foreach my $sample ($design->get_sample_names()) {
   if($design->sample_opt($sample, 'ref2_db')) {
 		my $gff = $design->sample_opt($sample, 'ref2_gff');
 
-		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
-		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+		my $target_in = $design->get_sample_target_insert_ref2_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_ref2_sorted_file($sample);
 
 		my $target_out = $design->get_sample_target_insert_ref2_anno($sample);
 		my $off_out = $design->get_sample_off_insert_ref2_anno($sample);
@@ -247,8 +247,8 @@ foreach my $sample ($design->get_sample_names()) {
   if($design->sample_opt($sample, 'vec2_db')) {
 		my $gff = $design->sample_opt($sample, 'vec2_gff');
 
-		my $target_in = $design->get_sample_target_insert_vec_sorted_file($sample);
-		my $off_in = $design->get_sample_off_insert_vec_sorted_file($sample);
+		my $target_in = $design->get_sample_target_insert_vec2_sorted_file($sample);
+		my $off_in = $design->get_sample_off_insert_vec2_sorted_file($sample);
 
 		my $target_out = $design->get_sample_target_insert_vec2_anno($sample);
 		my $off_out = $design->get_sample_off_insert_vec2_anno($sample);
