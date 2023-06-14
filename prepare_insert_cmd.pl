@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for extract target insert read segments and map them to vector and auxilary ref2 and vec2 genomes
-our $VERSION = 'v1.2.2';
+our $VERSION = 'v1.2.3';
 our $ENV_FILE = 'set_insert_env.sh';
 
 use strict;
