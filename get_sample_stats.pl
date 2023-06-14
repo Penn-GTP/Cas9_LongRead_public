@@ -4,7 +4,8 @@ our $VERSION = 'v1.2.3';
 
 use strict;
 use warnings;
-use lib '/project/gtplab/pipeline/Cas9_LongRead';
+use File::Basename;
+use lib dirname (__FILE__);
 use Cas9LongReadExpDesign;
 
 my $usage = "Usage: perl $0 DESIGN-FILE OUTFILE";
