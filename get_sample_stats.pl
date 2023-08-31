@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for generating per-sample processing stats
-our $VERSION = 'v1.2.3';
+our $VERSION = 'v1.2.4';
 
 use strict;
 use warnings;

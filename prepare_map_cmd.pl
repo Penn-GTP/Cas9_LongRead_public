@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for mapping Cas9 LongReads to ref genome and extract inserts
-our $VERSION = 'v1.2.3';
+our $VERSION = 'v1.2.4';
 our $ENV_FILE = 'set_map_env.sh';
 
 use strict;

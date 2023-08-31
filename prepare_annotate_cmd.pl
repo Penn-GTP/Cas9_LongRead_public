@@ -1,6 +1,6 @@
 #!/bin/env perl
 # Prepare bash script for annotate insert based on vec and optionally rev2 and vec2 mapping
-our $VERSION = 'v1.2.3';
+our $VERSION = 'v1.2.4';
 our $ENV_FILE = 'set_annotate_env.sh';
 
 use strict;
