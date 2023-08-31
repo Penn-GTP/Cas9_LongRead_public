@@ -343,10 +343,11 @@ foreach my $sample ($design->get_sample_names()) {
 		my $target_out = $design->get_sample_target_insert_vec_summ($sample);
 		my $off_out = $design->get_sample_off_insert_vec_summ($sample);
     my $func_opt = $design->sample_opt($sample, 'functional_feature');
+    my $nuclease_opt = $design->sample_opt($sample, 'nuclease_feature');
 		
 		my $cmd;
-		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$target_in $BASE_DIR/$target_out --func-feat \"$func_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
-		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$off_in $BASE_DIR/$off_out --func-feat \"$func_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
+		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$target_in $BASE_DIR/$target_out --func-feat \"$func_opt\" --nuclease-feat \"$nuclease_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
+		$cmd .= "\n$SCRIPT_DIR/$insert_summ_script $BASE_DIR/$off_in $BASE_DIR/$off_out --func-feat \"$func_opt\" --nuclease-feat \"$nuclease_opt\" --min-ratio $MIN_COVER_RATIO --feat-tag $FEATURE_TAG --ARM-key \"$ARM_KEY\" --ARM-min-ratio $ARM_MIN_RATIO";
 
 		if(!(-e "$BASE_DIR/$target_out" && -e "$BASE_DIR/$off_out")) {
 			print OUT "$cmd\n";

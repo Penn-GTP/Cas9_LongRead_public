@@ -10,16 +10,18 @@ my $feat_tag = 'label';
 my $ARM_key = "(?i:ARM)|shHDR";
 my $ARM_min_ratio = 0.1;
 
-my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE <--func-feat STR> [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ARM-key $ARM_key] [--ARM-min-ratio $ARM_min_ratio]";
+my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE <--func-feat STR> <--nuclease-feat STR> [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ARM-key $ARM_key] [--ARM-min-ratio $ARM_min_ratio]";
 
 # get opts
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
 
 my $func_feat;
+my $nuclease_feat;
 
 GetOptions(
 "func-feat=s" => \$func_feat,
+"nuclease-feat=s" => \$nuclease_feat,
 "min-ratio=f" => \$min_ratio,
 "feat-tag=s" => \$feat_tag,
 "ARM-key=s" => \$ARM_key,
@@ -33,6 +35,7 @@ open(IN, "<$infile") || die "Unable to open $infile: $!";
 open(OUT, ">$outfile") || die "Unable to write to $outfile: $!";
 
 my @func_feat = split(/\|/, $func_feat);
+my @nuclease_feat = split(/\|/, $nuclease_feat);
 $ARM_key = qr/$ARM_key/;
 
 # read in GFF annotation
@@ -58,7 +61,7 @@ while(my $line = <IN>) {
 
 # scan each insert and output
 # print OUT "#options invoked: --feat-basic=$feat_basic;--feat-full=$feat_full;--min-ratio=$min_ratio\n";
-print OUT "rname\tfeature_cover_summ\tfunctional_clone\tinsert_type\n";
+print OUT "rname\tfeature_cover_summ\tfunctional_clone\tnuclease_clone\tinsert_type\n";
 
 foreach my $rname (sort keys %name2feat_cover) {
 	my @all_feats = @{$name2feat_cover{$rname}};
@@ -71,13 +74,18 @@ foreach my $rname (sort keys %name2feat_cover) {
     }
   }
 	my @feat_rev = reverse(@feat_fwd);
-# count feature fwd
-  my $func_clone = count_sub_array(\@feat_fwd, \@func_feat);
+# count functional feature
+  my $func_clone = count_sub_array(\@func_feat, \@feat_fwd);
   if(@func_feat > 1) { # also count feature rev
-    $func_clone += count_sub_array(\@feat_rev, \@func_feat);
+    $func_clone += count_sub_array(\@func_feat, \@feat_rev);
+  }
+# count nuclease feature
+  my $nuclease_clone = count_sub_array(\@nuclease_feat, \@feat_fwd);
+  if(@nuclease_feat > 1) { # also count feature rev
+    $nuclease_clone += count_sub_array(\@nuclease_feat, \@feat_rev);
   }
   my $insert_type = ends_with_ARM($ARM_key, $ARM_min_ratio, @all_feats) ? 'HDR' : 'NHEJ';
-	print OUT "$rname\t$cover_summ\t$func_clone\t$insert_type\n";
+	print OUT "$rname\t$cover_summ\t$func_clone\t$nuclease_clone\t$insert_type\n";
 }
 
 close(IN);
@@ -92,20 +100,13 @@ sub count_sub_array {
   while($i < $n && $j < $m) {
     if($A->[$i] eq $B->[$j]) {
       $i++;
-      $j++;
-
-      if($j == $m) {
-        $clone++;
-        $i++;
-        $j = 0;
-      }
     }
-    else {
-      $i = $i - $j + 1;
-      $j = 0;
+    if($i == $n) {
+      $clone++;
+      $i = 0;
     }
+    $j++;
   }
-
   return $clone;
 }
 
