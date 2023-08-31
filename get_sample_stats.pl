@@ -224,7 +224,7 @@ foreach my $sample ($design->get_sample_names()) {
 		chomp $off_vec2_mapped;
 	}
 
-# get target insert functional counts
+# get target insert counts
 	my ($target_functional_count, $target_functional_clone) = (0, 0);
 	my ($target_nuclease_count, $target_nuclease_clone) = (0, 0);
 	my %target_functional_freq;
@@ -248,13 +248,13 @@ foreach my $sample ($design->get_sample_names()) {
 			if($nuclease_clone > 0) {
 				$target_nuclease_count++;
 				$target_nuclease_clone += $nuclease_clone;
-				$target_nuclease_freq{$func_clone}++;
+				$target_nuclease_freq{$nuclease_clone}++;
 			}
 		}
 		close(IN);
 	}
 
-# get off insert functional counts
+# get off insert counts
 	my ($off_functional_count, $off_functional_clone) = (0, 0);
 	my ($off_nuclease_count, $off_nuclease_clone) = (0, 0);
 	my %off_functional_freq;
