@@ -5,19 +5,18 @@ use warnings;
 
 use Getopt::Long;
 
+my $func_feat = 'transgene';
+my $nuclease_feat = 'ARCUS2';
 my $min_ratio = 0.9;
 my $feat_tag = 'label';
 my $ARM_key = "(?i:ARM)|shHDR";
 my $ARM_min_ratio = 0.1;
 
-my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE <--func-feat STR> <--nuclease-feat STR> [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ARM-key $ARM_key] [--ARM-min-ratio $ARM_min_ratio]";
+my $usage = "Usage: $0 GFF-INFILE TSV-OUTFILE [--func-feat $func_feat] [--nuclease-feat $nuclease_feat] [--min-ratio $min_ratio] [--feature-tag $feat_tag] [--ARM-key $ARM_key] [--ARM-min-ratio $ARM_min_ratio]";
 
 # get opts
 my $infile = shift or die $usage;
 my $outfile = shift or die $usage;
-
-my $func_feat;
-my $nuclease_feat;
 
 GetOptions(
 "func-feat=s" => \$func_feat,
